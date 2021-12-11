@@ -5,5 +5,5 @@ int main()
     RCVM::InstParser parser("inst.rcvi");
     auto inst_list = parser.parse();
     RCVM::VM vm;
-    vm.run(inst_list);
+    vm.run(std::move(inst_list));
 }

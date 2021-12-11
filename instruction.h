@@ -20,40 +20,74 @@ namespace RCVM {
 
     struct VMInst {
         InstType type;
+    protected:
         VMInst() = default;
     };
 
     struct Add : VMInst {
-        Add() = default;
+        Add()
+        {
+            type = InstType::Add;
+        }
     };
     struct Sub : VMInst {
-        Sub() = default;
+        Sub()
+        {
+            type = InstType::Sub;
+        }
     };
     struct Mul : VMInst {
-        Mul() = default;
+        Mul()
+        {
+            type = InstType::Mul;
+        }
     };
     struct Div : VMInst {
-        Div() = default;
+        Div()
+        {
+            type = InstType::Div;
+        }
     };
     struct Label : VMInst {
-        Label() = default;
+        Label()
+        {
+            type = InstType::Label;
+        }
     };
     struct DirectJump : VMInst {
-        DirectJump() = default;
+        DirectJump()
+        {
+            type = InstType::DirectJump;
+        }
     };
     struct CondJump : VMInst {
-        CondJump() = default;
+        CondJump()
+        {
+            type = InstType::CondJump;
+        }
     };
     struct Push : VMInst {
-        Push() = default;
+        Push()
+        {
+            type = InstType::Push;
+        }
     };
     struct Pop : VMInst {
-        Pop() = default;
+        Pop()
+        {
+            type = InstType::Pop;
+        }
     };
     struct Call : VMInst {
-        Call() = default;
+        Call()
+        {
+            type = InstType::Call;
+        }
     };
     struct Return : VMInst {
-        Return() = default;
+        Return()
+        {
+            type = InstType::Return;
+        }
     };
 }
