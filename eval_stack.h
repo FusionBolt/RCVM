@@ -17,7 +17,7 @@ namespace RCVM {
             _stack_top += 4;
         }
 
-        void pop(int target) {
+        void pop([[maybe_unused]] int target) {
             // target addr set value top_value()
             _stack_top -= 4;
         }

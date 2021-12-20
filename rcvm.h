@@ -56,7 +56,7 @@ namespace RCVM
                 case InstType::CondJump:
                     visit(static_cast<const CondJump&>(inst));break;
                 case InstType::Push:
-                    visit(static_cast<const Push&>(inst));
+                    visit(static_cast<const Push&>(inst));break;
                 case InstType::Pop:
                     visit(static_cast<const Pop&>(inst));break;
                 case InstType::Call:
@@ -66,42 +66,42 @@ namespace RCVM
             }
         }
 
-        void visit(const Add &inst) {
+        void visit([[maybe_unused]] const Add &inst) {
             _eval_stack.exec([](auto &a, auto& b) { return a + b; });
         }
 
-        void visit(const Sub &inst) {
+        void visit([[maybe_unused]] const Sub &inst) {
             _eval_stack.exec([](auto &a, auto& b) { return a - b; });
         }
 
-        void visit(const Mul &inst) {
+        void visit([[maybe_unused]] const Mul &inst) {
             _eval_stack.exec([](auto &a, auto& b) { return a * b; });
         }
 
-        void visit(const Div &inst) {
+        void visit([[maybe_unused]] const Div &inst) {
             _eval_stack.exec([](auto &a, auto& b) { return a / b; });
         }
 
-        void visit(const Label &inst) {}
+        void visit([[maybe_unused]] const Label &inst) {}
 
-        void visit(const DirectJump &inst) {}
+        void visit([[maybe_unused]] const DirectJump &inst) {}
 
-        void visit(const CondJump &inst) {}
+        void visit([[maybe_unused]] const CondJump &inst) {}
 
-        void visit(const Push &inst) {
+        void visit([[maybe_unused]] const Push &inst) {
             _eval_stack.push(0);
         }
 
-        void visit(const Pop &inst) {
+        void visit([[maybe_unused]] const Pop &inst) {
             // todo:pop to stack top
             _eval_stack.pop(0);
         }
 
-        void visit(const Call &inst) {
+        void visit([[maybe_unused]] const Call &inst) {
             _vm._status.call_stack += 1;
         }
 
-        void visit(const Return &inst) {
+        void visit([[maybe_unused]] const Return &inst) {
             _vm._status.call_stack -= 1;
         }
 
