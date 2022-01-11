@@ -1,40 +1,43 @@
 #pragma once
 
-#include "instruction.h"
+#include "instructions.hpp"
+#include "symbol_table.hpp"
+
 #include <string>
 #include <utility>
 #include <vector>
+#include <map>
 #include <fstream>
 #include <sstream>
 #include <iostream>
 #include <memory>
 
 namespace RCVM {
+    std::vector<std::string> split(std::string_view str, char c = ' ') {
+        size_t index = 0;
+        std::vector<std::string> str_list;
+        for (size_t i = 0; i < str.size(); ++i) {
+            if (str[i] == c) {
+                auto slice_str = str.substr(index, i);
+                str_list.emplace_back(slice_str);
+                while (str[i + 1] == c) {
+                    ++i;
+                }
+                index = i + 1;
+            }
+        }
+        if (index != str.size()) {
+            auto slice_str = str.substr(index, str.size());
+            str_list.emplace_back(slice_str);
+        }
+        return str_list;
+    }
     class InstParser {
     public:
-        explicit InstParser(std::string inst_path) : _inst_path(std::move(inst_path)) {}
+        explicit InstParser(std::string inst_path = "inst.rcvi", std::string symbol_path = "func.rcsym")
+        : _inst_path(std::move(inst_path)), _symbol_path(std::move(symbol_path)) {}
 
-        std::vector<std::string> split(std::string_view str, char c = ' ') {
-            size_t index = 0;
-            std::vector<std::string> str_list;
-            for (size_t i = 0; i < str.size(); ++i) {
-                if (str[i] == c) {
-                    auto slice_str = str.substr(index, i);
-                    str_list.emplace_back(slice_str);
-                    while (str[i + 1] == c) {
-                        ++i;
-                    }
-                    index = i + 1;
-                }
-            }
-            if (index != str.size()) {
-                auto slice_str = str.substr(index, str.size());
-                str_list.emplace_back(slice_str);
-            }
-            return str_list;
-        }
-
-        std::vector<std::unique_ptr<VMInst>> parse() {
+        std::vector<std::unique_ptr<VMInst>> parse_inst() {
             std::vector<std::unique_ptr<VMInst>> inst_list;
             std::ifstream f(_inst_path);
             std::string inst;
@@ -49,45 +52,22 @@ namespace RCVM {
             return inst_list;
         }
 
+        SymbolTable<FunInfo> parse_symbol()
+        {
+            std::ifstream f(_symbol_path);
+            std::string symbol;
+            SymbolTable<FunInfo> table;
+            while (std::getline(f, symbol)) {
+                auto list = split(symbol);
+                table.define(list[0], FunInfo(std::stoi(list[1]), std::stoi(list[2])));
+            }
+            return table;
+        }
+
+
+
     private:
         std::string _inst_path;
-
-        std::unique_ptr<VMInst> get_inst(const std::vector<std::string> &list) {
-            new Add();
-            if (list[0] == "Add") {
-                return std::make_unique<Add>();
-            }
-            if (list[0] == "Sub") {
-                return std::make_unique<Sub>();
-            }
-            if (list[0] == "Mul") {
-                return std::make_unique<Mul>();
-            }
-            if (list[0] == "Div") {
-                return std::make_unique<Div>();
-            }
-            if (list[0] == "Label") {
-                return std::make_unique<Label>();
-            }
-            if (list[0] == "DirectJump") {
-                return std::make_unique<DirectJump>();
-            }
-            if (list[0] == "CondJump") {
-                return std::make_unique<CondJump>();
-            }
-            if (list[0] == "Push") {
-                return std::make_unique<Push>();
-            }
-            if (list[0] == "Pop") {
-                return std::make_unique<Pop>();
-            }
-            if (list[0] == "Call") {
-                return std::make_unique<Call>();
-            }
-            if (list[0] == "Return") {
-                return std::make_unique<Return>();
-            }
-            throw std::runtime_error("Not supported instruction:" + list[0]);
-        }
+        std::string _symbol_path;
     };
 }
