@@ -59,12 +59,11 @@ namespace RCVM {
             SymbolTable<FunInfo> table;
             while (std::getline(f, symbol)) {
                 auto list = split(symbol);
-                table.define(list[0], FunInfo(std::stoi(list[1]), std::stoi(list[2])));
+                auto begin = list[3] == "undefined" ? 0 : std::stoi(list[3]);
+                table.define(list[0], FunInfo(std::stoi(list[1]), std::stoi(list[2]), begin));
             }
             return table;
         }
-
-
 
     private:
         std::string _inst_path;

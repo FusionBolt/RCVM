@@ -5,16 +5,16 @@
 struct FunInfo
 {
     FunInfo(): FunInfo(0, 0, 0) {}
-    FunInfo(int argc, int locals, int begin = 0): _argc(argc), _locals(locals), _begin(begin) {}
+    FunInfo(size_t _argc, size_t _locals, size_t _begin): argc(_argc), locals(_locals), begin(_begin) {}
 
     FunInfo(const FunInfo& other) = default;
     FunInfo(FunInfo&& other) = default;
     FunInfo& operator=(const FunInfo& other) = default;
     FunInfo& operator=(FunInfo&& other) = default;
 
-    int _begin;
-    int _argc;
-    int _locals;
+    size_t argc;
+    size_t locals;
+    size_t begin;
 };
 
 template<typename T>
@@ -23,10 +23,21 @@ class SymbolTable
 public:
     SymbolTable() = default;
 
-    void define(std::string sym, T value)
+    void define(const std::string& sym, T value)
     {
         _table[sym] = value;
     }
+
+    T& operator[] (const std::string& sym)
+    {
+        return _table[sym];
+    }
+
+    bool contains(const std::string& sym)
+    {
+        return _table.contains(sym);
+    }
+
 private:
     std::map<std::string, T> _table;
 };

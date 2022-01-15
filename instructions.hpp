@@ -18,6 +18,7 @@ Label,
 LocalVarOperator,
 Mul,
 Pop,
+Print,
 Push,
 Return,
 SetLocal,
@@ -35,54 +36,49 @@ struct Add : VMInst
 public:
   Add():VMInst(InstType::Add) {}
 
-private:
 
 };
 
 struct Addr : VMInst
 {
 public:
-  Addr():VMInst(InstType::Addr) {}
+  Addr(string _seg, int _offset):VMInst(InstType::Addr), seg(_seg), offset(_offset) {}
 
-private:
-
+string seg;
+int offset;
 };
 
 struct Call : VMInst
 {
 public:
-  Call():VMInst(InstType::Call) {}
+  Call(string _target):VMInst(InstType::Call), target(_target) {}
 
-private:
-
+string target;
 };
 
 struct CondJump : VMInst
 {
 public:
-  CondJump(string cond, int addr):VMInst(InstType::CondJump), _cond(cond), _addr(addr) {}
+  CondJump(string _cond, int _addr):VMInst(InstType::CondJump), cond(_cond), addr(_addr) {}
 
-private:
-string _cond;
-int _addr;
+string cond;
+int addr;
 };
 
 struct DefineFun : VMInst
 {
 public:
-  DefineFun():VMInst(InstType::DefineFun) {}
+  DefineFun(string _name):VMInst(InstType::DefineFun), name(_name) {}
 
-private:
-
+string name;
 };
 
 struct DirectJump : VMInst
 {
 public:
-  DirectJump(string target):VMInst(InstType::DirectJump), _target(target) {}
+  DirectJump(string _target):VMInst(InstType::DirectJump), target(_target) {}
 
-private:
-string _target;
+string target;
 };
 
 struct Div : VMInst
@@ -90,7 +86,6 @@ struct Div : VMInst
 public:
   Div():VMInst(InstType::Div) {}
 
-private:
 
 };
 
@@ -99,7 +94,6 @@ struct FunEnd : VMInst
 public:
   FunEnd():VMInst(InstType::FunEnd) {}
 
-private:
 
 };
 
@@ -108,26 +102,23 @@ struct GetLocal : VMInst
 public:
   GetLocal():VMInst(InstType::GetLocal) {}
 
-private:
 
 };
 
 struct Label : VMInst
 {
 public:
-  Label():VMInst(InstType::Label) {}
+  Label(string _name):VMInst(InstType::Label), name(_name) {}
 
-private:
-
+string name;
 };
 
 struct LocalVarOperator : VMInst
 {
 public:
-  LocalVarOperator():VMInst(InstType::LocalVarOperator) {}
+  LocalVarOperator(int _offset):VMInst(InstType::LocalVarOperator), offset(_offset) {}
 
-private:
-
+int offset;
 };
 
 struct Mul : VMInst
@@ -135,26 +126,31 @@ struct Mul : VMInst
 public:
   Mul():VMInst(InstType::Mul) {}
 
-private:
 
 };
 
 struct Pop : VMInst
 {
 public:
-  Pop(int pos):VMInst(InstType::Pop), _pos(pos) {}
+  Pop(int _pos):VMInst(InstType::Pop), pos(_pos) {}
 
-private:
-int _pos;
+int pos;
+};
+
+struct Print : VMInst
+{
+public:
+  Print(int _var_index):VMInst(InstType::Print), var_index(_var_index) {}
+
+int var_index;
 };
 
 struct Push : VMInst
 {
 public:
-  Push():VMInst(InstType::Push) {}
+  Push(int _value):VMInst(InstType::Push), value(_value) {}
 
-private:
-
+int value;
 };
 
 struct Return : VMInst
@@ -162,7 +158,6 @@ struct Return : VMInst
 public:
   Return():VMInst(InstType::Return) {}
 
-private:
 
 };
 
@@ -171,7 +166,6 @@ struct SetLocal : VMInst
 public:
   SetLocal():VMInst(InstType::SetLocal) {}
 
-private:
 
 };
 
@@ -180,29 +174,27 @@ struct Sub : VMInst
 public:
   Sub():VMInst(InstType::Sub) {}
 
-private:
 
 };
 
 struct UnsetAddr : VMInst
 {
 public:
-  UnsetAddr(string unset_addr):VMInst(InstType::UnsetAddr), _unset_addr(unset_addr) {}
+  UnsetAddr(string _unset_addr):VMInst(InstType::UnsetAddr), unset_addr(_unset_addr) {}
 
-private:
-string _unset_addr;
+string unset_addr;
 };
 std::unique_ptr<VMInst> get_inst(const std::vector<std::string> &list)
 {
 if (list[0] == "Add") return std::make_unique<Add>();
 
-if (list[0] == "Addr") return std::make_unique<Addr>();
+if (list[0] == "Addr") return std::make_unique<Addr>(list[1], std::stoi(list[2]));
 
-if (list[0] == "Call") return std::make_unique<Call>();
+if (list[0] == "Call") return std::make_unique<Call>(list[1]);
 
 if (list[0] == "CondJump") return std::make_unique<CondJump>(list[1], std::stoi(list[2]));
 
-if (list[0] == "DefineFun") return std::make_unique<DefineFun>();
+if (list[0] == "DefineFun") return std::make_unique<DefineFun>(list[1]);
 
 if (list[0] == "DirectJump") return std::make_unique<DirectJump>(list[1]);
 
@@ -212,15 +204,17 @@ if (list[0] == "FunEnd") return std::make_unique<FunEnd>();
 
 if (list[0] == "GetLocal") return std::make_unique<GetLocal>();
 
-if (list[0] == "Label") return std::make_unique<Label>();
+if (list[0] == "Label") return std::make_unique<Label>(list[1]);
 
-if (list[0] == "LocalVarOperator") return std::make_unique<LocalVarOperator>();
+if (list[0] == "LocalVarOperator") return std::make_unique<LocalVarOperator>(std::stoi(list[1]));
 
 if (list[0] == "Mul") return std::make_unique<Mul>();
 
 if (list[0] == "Pop") return std::make_unique<Pop>(std::stoi(list[1]));
 
-if (list[0] == "Push") return std::make_unique<Push>();
+if (list[0] == "Print") return std::make_unique<Print>(std::stoi(list[1]));
+
+if (list[0] == "Push") return std::make_unique<Push>(std::stoi(list[1]));
 
 if (list[0] == "Return") return std::make_unique<Return>();
 
