@@ -8,6 +8,16 @@
 
 namespace RCVM
 {
+    void print(const std::vector<int>& vars)
+    {
+        LOG_DEBUG("Print:")
+        for (int i = 0; i < vars.size(); ++i)
+        {
+            std::cout << vars[i] << " ";
+        }
+        LOG_DEBUG("End Print")
+    }
+
     using FunctionSymbolTable = SymbolTable<FunInfo>;
 
     class VMInstVisitor;
@@ -41,9 +51,13 @@ namespace RCVM
                 // todo: find definition
                 throw std::runtime_error("Target Function" + f + "Not Found");
             }
-            _pc = _sym_table[f].begin;
+            auto &fun = _sym_table[f];
+            // todo: var args
+            // 1. stack process
+            _eval_stack.begin_call(fun.argc, fun.locals, _pc);
+            // 2. set pc
+            _pc = fun.begin;
             LOG_DEBUG("Call " + f + " PC:" + std::to_string(_pc))
-            _eval_stack.begin_call(_pc + 1);
         }
 
         void end_call()
@@ -99,13 +113,11 @@ namespace RCVM
                     visit(static_cast<const Pop&>(inst));break;
                 case InstType::Call:
                     visit(static_cast<const Call&>(inst));break;
-                case InstType::DefineFun:
-                    visit(static_cast<const DefineFun&>(inst));break;
+                case InstType::FunLabel:
+                    visit(static_cast<const FunLabel&>(inst));break;
                 case InstType::Return:
                     visit(static_cast<const Return&>(inst));break;
                 case InstType::Addr:
-                    break;
-                case InstType::FunEnd:
                     break;
                 case InstType::GetLocal:
                     visit(static_cast<const GetLocal&>(inst));break;
@@ -115,25 +127,23 @@ namespace RCVM
                     visit(static_cast<const SetLocal&>(inst));break;
                 case InstType::UnsetAddr:
                     break;
-                case InstType::Print:
-                    break;
             }
         }
 
         void visit(const Add &inst) {
-            _eval_stack.exec([](auto &a, auto& b) { return a + b; });
+            _eval_stack.exec([](auto &&a, auto&& b) { return a + b; });
         }
 
         void visit(const Sub &inst) {
-            _eval_stack.exec([](auto &a, auto& b) { return a - b; });
+            _eval_stack.exec([](auto &&a, auto&& b) { return a - b; });
         }
 
         void visit(const Mul &inst) {
-            _eval_stack.exec([](auto &a, auto& b) { return a * b; });
+            _eval_stack.exec([](auto &&a, auto&& b) { return a * b; });
         }
 
         void visit(const Div &inst) {
-            _eval_stack.exec([](auto &a, auto& b) { return a / b; });
+            _eval_stack.exec([](auto &&a, auto&& b) { return a / b; });
         }
 
         void visit(const Label &inst) {}
@@ -143,12 +153,11 @@ namespace RCVM
         void visit(const CondJump &inst) {}
 
         void visit(const Push &inst) {
-            _eval_stack.push(0);
+            _eval_stack.push(inst.value);
         }
 
         void visit(const Pop &inst) {
-            // todo:pop to stack top
-            _eval_stack.pop(0);
+            _eval_stack.pop();
         }
 
         void visit(const Call &inst) {
@@ -156,15 +165,8 @@ namespace RCVM
             // set value for stack frame
         }
 
-        void visit(const DefineFun &inst) {
-            auto entry = _vm._pc;
-            _vm.sym_table()[inst.name].begin = entry;
-            while(_vm._inst_list[entry]->type != InstType::FunEnd)
-            {
-                ++entry;
-            }
-            // pc increment per inst
-            _vm._pc = entry - 1;
+        void visit(const FunLabel &inst) {
+            throw std::runtime_error("Inst FunLabel should not be reached PC:" + std::to_string(_vm._pc));
         }
 
         void visit(const Return &inst) {
@@ -173,14 +175,17 @@ namespace RCVM
 
         void visit(const GetLocal &inst)
         {
-
+            auto v = _eval_stack.get_local(inst.offset);
+            _eval_stack.push(v);
+            LOG_DEBUG("GetLocal Pos:" + std::to_string(inst.offset) + " value:" + std::to_string(v));
         }
 
         void visit(const SetLocal &inst)
         {
-
+            auto v = _eval_stack.pop();
+            _eval_stack.set_local(inst.offset, v);
+            LOG_DEBUG("SetLocal Pos:" + std::to_string(inst.offset) + " value:" + std::to_string(v));
         }
-
 
     private:
         VM &_vm;
@@ -194,11 +199,13 @@ namespace RCVM
         LOG_DEBUG("VM Start")
         _visitor = std::make_unique<VMInstVisitor>(*this);
         init();
+        LOG_DEBUG("VM Init Finish")
         while(_pc < _inst_list.size() && !can_stop())
         {
             _pc++;
             auto &inst = _inst_list[_pc];
             _visitor->accept(*inst);
+            // print(_eval_stack.current_data());
         }
         LOG_DEBUG("VM End")
     }

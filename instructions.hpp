@@ -9,16 +9,14 @@ Add,
 Addr,
 Call,
 CondJump,
-DefineFun,
 DirectJump,
 Div,
-FunEnd,
+FunLabel,
 GetLocal,
 Label,
 LocalVarOperator,
 Mul,
 Pop,
-Print,
 Push,
 Return,
 SetLocal,
@@ -65,14 +63,6 @@ string cond;
 int addr;
 };
 
-struct DefineFun : VMInst
-{
-public:
-  DefineFun(string _name):VMInst(InstType::DefineFun), name(_name) {}
-
-string name;
-};
-
 struct DirectJump : VMInst
 {
 public:
@@ -89,20 +79,20 @@ public:
 
 };
 
-struct FunEnd : VMInst
+struct FunLabel : VMInst
 {
 public:
-  FunEnd():VMInst(InstType::FunEnd) {}
+  FunLabel(string _name):VMInst(InstType::FunLabel), name(_name) {}
 
-
+string name;
 };
 
 struct GetLocal : VMInst
 {
 public:
-  GetLocal():VMInst(InstType::GetLocal) {}
+  GetLocal(int _offset):VMInst(InstType::GetLocal), offset(_offset) {}
 
-
+int offset;
 };
 
 struct Label : VMInst
@@ -137,14 +127,6 @@ public:
 int pos;
 };
 
-struct Print : VMInst
-{
-public:
-  Print(int _var_index):VMInst(InstType::Print), var_index(_var_index) {}
-
-int var_index;
-};
-
 struct Push : VMInst
 {
 public:
@@ -164,9 +146,9 @@ public:
 struct SetLocal : VMInst
 {
 public:
-  SetLocal():VMInst(InstType::SetLocal) {}
+  SetLocal(int _offset):VMInst(InstType::SetLocal), offset(_offset) {}
 
-
+int offset;
 };
 
 struct Sub : VMInst
@@ -194,15 +176,13 @@ if (list[0] == "Call") return std::make_unique<Call>(list[1]);
 
 if (list[0] == "CondJump") return std::make_unique<CondJump>(list[1], std::stoi(list[2]));
 
-if (list[0] == "DefineFun") return std::make_unique<DefineFun>(list[1]);
-
 if (list[0] == "DirectJump") return std::make_unique<DirectJump>(list[1]);
 
 if (list[0] == "Div") return std::make_unique<Div>();
 
-if (list[0] == "FunEnd") return std::make_unique<FunEnd>();
+if (list[0] == "FunLabel") return std::make_unique<FunLabel>(list[1]);
 
-if (list[0] == "GetLocal") return std::make_unique<GetLocal>();
+if (list[0] == "GetLocal") return std::make_unique<GetLocal>(std::stoi(list[1]));
 
 if (list[0] == "Label") return std::make_unique<Label>(list[1]);
 
@@ -212,13 +192,11 @@ if (list[0] == "Mul") return std::make_unique<Mul>();
 
 if (list[0] == "Pop") return std::make_unique<Pop>(std::stoi(list[1]));
 
-if (list[0] == "Print") return std::make_unique<Print>(std::stoi(list[1]));
-
 if (list[0] == "Push") return std::make_unique<Push>(std::stoi(list[1]));
 
 if (list[0] == "Return") return std::make_unique<Return>();
 
-if (list[0] == "SetLocal") return std::make_unique<SetLocal>();
+if (list[0] == "SetLocal") return std::make_unique<SetLocal>(std::stoi(list[1]));
 
 if (list[0] == "Sub") return std::make_unique<Sub>();
 

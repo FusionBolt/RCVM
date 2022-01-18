@@ -12,6 +12,7 @@ struct FunInfo
     FunInfo& operator=(const FunInfo& other) = default;
     FunInfo& operator=(FunInfo&& other) = default;
 
+    [[nodiscard]] size_t local_count() const { return locals - argc; }
     size_t argc;
     size_t locals;
     size_t begin;

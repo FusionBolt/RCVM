@@ -9,27 +9,28 @@ namespace RCVM {
         EvalStack() :
                 _memory(std::make_unique<char[]>(1024 * 2048)),
                 _frame(nullptr),
-                _stack_top(_memory.get()) {
-        }
+                _stack_top(_memory.get()),
+                _stack_bottom(_stack_top) {}
 
         EvalStack(const EvalStack&) = delete;
         EvalStack operator=(const EvalStack&) = delete;
 
         void push(int value) {
             top_value() = value;
-            _stack_top += MoveOffset;
+            stack_move(1);
         }
 
-        void pop([[maybe_unused]] int target) {
-            // target addr set value top_value()
-            _stack_top -= MoveOffset;
+        int pop()
+        {
+            auto value = top_value();
+            stack_move(-1);
+            return value;
         }
 
         template<typename Callable>
         void exec(Callable &&f)
         {
-            auto new_v = f(get_value(0), get_value(4));
-            _stack_top += MoveOffset * 2;
+            auto new_v = f(pop(), pop());
             push(new_v);
         }
 
@@ -38,27 +39,86 @@ namespace RCVM {
         }
 
         int& get_value(int offset) {
-            return *reinterpret_cast<int*>(_stack_top - offset);
+            return *get_top_offset(offset);
         }
 
-        void begin_call(size_t ret_addr)
+        void begin_call(size_t argc, size_t locals, size_t ret_addr)
         {
-            _frame = std::make_shared<StackFrame>(_frame, _stack_top, ret_addr);
+            // 1.set stack base
+            auto *base = get_args_begin(argc);
+            // 2.alloc local var space
+            _stack_top = stack_move(base, static_cast<int>(locals));
+            // 3.create new stack frame
+            _frame = std::make_shared<StackFrame>(_frame, base, ret_addr);
         }
 
         size_t end_call()
         {
             auto ret_addr = _frame->ret_addr();
-            _stack_top = _frame->base() - 1;
+            _stack_top = stack_move(_frame->base(), -1);
             _frame = _frame->prev();
             return ret_addr;
         }
 
+        // positive only
+        int get_local(size_t offset)
+        {
+            return *get_base_offset(static_cast<int>(offset));
+        }
+
+        void set_local(size_t offset, int value)
+        {
+            *get_base_offset(static_cast<int>(offset)) = value;
+        }
+
         bool empty() const { return _frame == nullptr; }
+
+        // todo:const
+        std::vector<int> current_data()
+        {
+            std::vector<int> vars;
+            auto count = (_stack_top - _frame->base()) / MoveOffset;
+            for (int i = 0; i < count; ++i) {
+                vars.push_back(*get_base_offset(i));
+            }
+            return vars;
+        }
+
     private:
+        char *stack_move(char *stack_pos, int offset) const
+        {
+            return stack_pos + offset * MoveOffset;
+        }
+
+        void stack_move(int offset)
+        {
+            _stack_top = _stack_top + offset * MoveOffset;
+        }
+
+        int *get_top_offset(int offset)
+        {
+            return get_offset_pos(_stack_top, offset);
+        }
+
+        int *get_base_offset(int offset)
+        {
+            return get_offset_pos(_frame->base(), offset);
+        }
+
+        int *get_offset_pos(char *base, int offset)
+        {
+            return reinterpret_cast<int*>(base + offset * MoveOffset);
+        }
+
+        char *get_args_begin(size_t argc)
+        {
+            return _stack_top - argc * MoveOffset;
+        }
+
         std::unique_ptr<char[]> _memory;
         // todo:unique_ptr?
         std::shared_ptr<StackFrame> _frame;
         char *_stack_top;
+        char *_stack_bottom;
     };
 }
