@@ -20,10 +20,12 @@ namespace RCVM {
             stack_move(1);
         }
 
+        // stack_top point to address which will be writen
+        // need move down before read
         int pop()
         {
-            auto value = top_value();
             stack_move(-1);
+            auto value = top_value();
             return value;
         }
 

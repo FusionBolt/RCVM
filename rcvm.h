@@ -4,17 +4,22 @@
 #include "symbol_table.hpp"
 
 // todo:log option for enable dump pc, stack pointer...
+#ifdef DEBUG
 #define LOG_DEBUG(info) std::cout << info << std::endl;
+#else
+#define LOG_DEBUG(info)
+#endif
 
 namespace RCVM
 {
     void print(const std::vector<int>& vars)
     {
-        LOG_DEBUG("Print:")
+        LOG_DEBUG("Print Current Stack:")
         for (int i = 0; i < vars.size(); ++i)
         {
             std::cout << vars[i] << " ";
         }
+        std::cout << std::endl;
         LOG_DEBUG("End Print")
     }
 
@@ -161,7 +166,15 @@ namespace RCVM
         }
 
         void visit(const Call &inst) {
-            _vm.begin_call(inst.target);
+            if(inst.target == "put_i")
+            {
+                auto value = _eval_stack.pop();
+                std::cout << "put_i value:" << value << std::endl;
+            }
+            else
+            {
+                _vm.begin_call(inst.target);
+            }
             // set value for stack frame
         }
 
@@ -170,7 +183,9 @@ namespace RCVM
         }
 
         void visit(const Return &inst) {
+            auto result = _eval_stack.pop();
             _vm.end_call();
+            _eval_stack.push(result);
         }
 
         void visit(const GetLocal &inst)
