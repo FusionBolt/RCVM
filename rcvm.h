@@ -24,45 +24,65 @@ namespace RCVM
     }
 
     using FunctionSymbolTable = SymbolTable<FunInfo>;
+    using ClassSymbolTable = SymbolTable<ClassInfo>;
 
     class VMInstVisitor;
     class VM
     {
     public:
         constexpr static auto VMEntryFun = "main";
+        constexpr static auto VMGlobalClass = "Kernel";
         VM() = default;
 
-        void run(std::vector<std::unique_ptr<VMInst>>&& inst_list, FunctionSymbolTable&& sym_table);
+        void run(ClassSymbolTable&& table);
 
         EvalStack& eval_stack()
         {
             return _eval_stack;
         }
 
-        [[nodiscard]] const FunctionSymbolTable& sym_table() const
+        [[nodiscard]] const ClassSymbolTable & sym_table() const
         {
             return _sym_table;
         }
 
-        [[nodiscard]] FunctionSymbolTable& sym_table()
+        [[nodiscard]] ClassSymbolTable& sym_table()
         {
             return _sym_table;
         }
 
-        void begin_call(const std::string& f)
+        void begin_call(const std::string& klass, const std::string& f)
         {
-            if(!_sym_table.contains(f))
+            if(!_sym_table.contains(klass) || !_sym_table[klass]._methods.contains(f))
             {
-                // todo: find definition
                 throw std::runtime_error("Target Function" + f + "Not Found");
             }
-            auto &fun = _sym_table[f];
+
+            // todo: find definition
+            auto &fun = _sym_table[klass]._methods[f];
+            if(fun.begin == UndefinedAddr)
+            {
+                fun.begin = load_method(fun);
+            }
             // todo: var args
             // 1. stack process
             _eval_stack.begin_call(fun.argc, fun.locals, _pc);
             // 2. set pc
             _pc = fun.begin;
             LOG_DEBUG("Call " + f + " PC:" + std::to_string(_pc))
+        }
+
+        size_t load_method(const FunInfo& f)
+        {
+            // 1. get start
+            auto start = std::max<int>(0, static_cast<int>(_inst_list.size() - 1));
+            // todo:need reset inst list in f? it can be replaced with unique_ptr?
+            // 2. load inst to inst_list
+            for(auto &&inst : f.inst_list)
+            {
+                _inst_list.push_back(inst);
+            }
+            return start;
         }
 
         void end_call()
@@ -75,15 +95,15 @@ namespace RCVM
     private:
         void init()
         {
-            begin_call(VMEntryFun);
+            begin_call(VMGlobalClass, VMEntryFun);
             LOG_DEBUG("Init:Jump To Main")
             LOG_DEBUG("Current PC:" + std::to_string(_pc))
         }
 
         friend class VMInstVisitor;
-        std::unique_ptr<VMInstVisitor> _visitor;
-        std::vector<std::unique_ptr<VMInst>> _inst_list;
-        FunctionSymbolTable _sym_table;
+        std::shared_ptr<VMInstVisitor> _visitor;
+        std::vector<std::shared_ptr<VMInst>> _inst_list;
+        ClassSymbolTable _sym_table;
         size_t _pc = 0;
         EvalStack _eval_stack;
         std::string _cur_fun;
@@ -132,36 +152,38 @@ namespace RCVM
                     visit(static_cast<const SetLocal&>(inst));break;
                 case InstType::UnsetAddr:
                     break;
+                case InstType::Alloc:
+                    break;
             }
         }
 
-        void visit(const Add &inst) {
+        void visit([[maybe_unused]] const Add &inst) {
             _eval_stack.exec([](auto &&a, auto&& b) { return a + b; });
         }
 
-        void visit(const Sub &inst) {
+        void visit([[maybe_unused]] const Sub &inst) {
             _eval_stack.exec([](auto &&a, auto&& b) { return a - b; });
         }
 
-        void visit(const Mul &inst) {
+        void visit([[maybe_unused]] const Mul &inst) {
             _eval_stack.exec([](auto &&a, auto&& b) { return a * b; });
         }
 
-        void visit(const Div &inst) {
+        void visit([[maybe_unused]] const Div &inst) {
             _eval_stack.exec([](auto &&a, auto&& b) { return a / b; });
         }
 
-        void visit(const Label &inst) {}
+        void visit([[maybe_unused]] const Label &inst) {}
 
-        void visit(const DirectJump &inst) {}
+        void visit([[maybe_unused]] const DirectJump &inst) {}
 
-        void visit(const CondJump &inst) {}
+        void visit([[maybe_unused]] const CondJump &inst) {}
 
         void visit(const Push &inst) {
             _eval_stack.push(inst.value);
         }
 
-        void visit(const Pop &inst) {
+        void visit([[maybe_unused]] const Pop &inst) {
             _eval_stack.pop();
         }
 
@@ -173,16 +195,16 @@ namespace RCVM
             }
             else
             {
-                _vm.begin_call(inst.target);
+                _vm.begin_call(inst.klass, inst.target);
             }
             // set value for stack frame
         }
 
-        void visit(const FunLabel &inst) {
+        void visit([[maybe_unused]] const FunLabel &inst) {
             throw std::runtime_error("Inst FunLabel should not be reached PC:" + std::to_string(_vm._pc));
         }
 
-        void visit(const Return &inst) {
+        void visit([[maybe_unused]] const Return &inst) {
             auto result = _eval_stack.pop();
             _vm.end_call();
             _eval_stack.push(result);
@@ -205,12 +227,11 @@ namespace RCVM
     private:
         VM &_vm;
         EvalStack &_eval_stack;
-        FunctionSymbolTable &_sym_table;
+        ClassSymbolTable &_sym_table;
     };
 
-    void VM::run(std::vector<std::unique_ptr<VMInst>> &&inst_list, FunctionSymbolTable&& sym_table) {
-        _sym_table = std::move(sym_table);
-        _inst_list = std::move(inst_list);
+    void VM::run(ClassSymbolTable&& sym_table) {
+        _sym_table = sym_table;
         LOG_DEBUG("VM Start")
         _visitor = std::make_unique<VMInstVisitor>(*this);
         init();
@@ -220,7 +241,7 @@ namespace RCVM
             _pc++;
             auto &inst = _inst_list[_pc];
             _visitor->accept(*inst);
-            // print(_eval_stack.current_data());
+            print(_eval_stack.current_data());
         }
         LOG_DEBUG("VM End")
     }

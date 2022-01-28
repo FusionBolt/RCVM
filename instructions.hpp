@@ -7,6 +7,7 @@ using std::string;
 enum class InstType {
 Add,
 Addr,
+Alloc,
 Call,
 CondJump,
 DirectJump,
@@ -46,11 +47,20 @@ string seg;
 int offset;
 };
 
+struct Alloc : VMInst
+{
+public:
+  Alloc(string _type):VMInst(InstType::Alloc), type(_type) {}
+
+string type;
+};
+
 struct Call : VMInst
 {
 public:
-  Call(string _target):VMInst(InstType::Call), target(_target) {}
+  Call(string _klass, string _target):VMInst(InstType::Call), klass(_klass), target(_target) {}
 
+string klass;
 string target;
 };
 
@@ -166,41 +176,43 @@ public:
 
 string unset_addr;
 };
-std::unique_ptr<VMInst> get_inst(const std::vector<std::string> &list)
+std::shared_ptr<VMInst> get_inst(const std::vector<std::string> &list)
 {
-if (list[0] == "Add") return std::make_unique<Add>();
+if (list[0] == "Add") return std::make_shared<Add>();
 
-if (list[0] == "Addr") return std::make_unique<Addr>(list[1], std::stoi(list[2]));
+if (list[0] == "Addr") return std::make_shared<Addr>(list[1], std::stoi(list[2]));
 
-if (list[0] == "Call") return std::make_unique<Call>(list[1]);
+if (list[0] == "Alloc") return std::make_shared<Alloc>(list[1]);
 
-if (list[0] == "CondJump") return std::make_unique<CondJump>(list[1], std::stoi(list[2]));
+if (list[0] == "Call") return std::make_shared<Call>(list[1], list[2]);
 
-if (list[0] == "DirectJump") return std::make_unique<DirectJump>(list[1]);
+if (list[0] == "CondJump") return std::make_shared<CondJump>(list[1], std::stoi(list[2]));
 
-if (list[0] == "Div") return std::make_unique<Div>();
+if (list[0] == "DirectJump") return std::make_shared<DirectJump>(list[1]);
 
-if (list[0] == "FunLabel") return std::make_unique<FunLabel>(list[1]);
+if (list[0] == "Div") return std::make_shared<Div>();
 
-if (list[0] == "GetLocal") return std::make_unique<GetLocal>(std::stoi(list[1]));
+if (list[0] == "FunLabel") return std::make_shared<FunLabel>(list[1]);
 
-if (list[0] == "Label") return std::make_unique<Label>(list[1]);
+if (list[0] == "GetLocal") return std::make_shared<GetLocal>(std::stoi(list[1]));
 
-if (list[0] == "LocalVarOperator") return std::make_unique<LocalVarOperator>(std::stoi(list[1]));
+if (list[0] == "Label") return std::make_shared<Label>(list[1]);
 
-if (list[0] == "Mul") return std::make_unique<Mul>();
+if (list[0] == "LocalVarOperator") return std::make_shared<LocalVarOperator>(std::stoi(list[1]));
 
-if (list[0] == "Pop") return std::make_unique<Pop>(std::stoi(list[1]));
+if (list[0] == "Mul") return std::make_shared<Mul>();
 
-if (list[0] == "Push") return std::make_unique<Push>(std::stoi(list[1]));
+if (list[0] == "Pop") return std::make_shared<Pop>(std::stoi(list[1]));
 
-if (list[0] == "Return") return std::make_unique<Return>();
+if (list[0] == "Push") return std::make_shared<Push>(std::stoi(list[1]));
 
-if (list[0] == "SetLocal") return std::make_unique<SetLocal>(std::stoi(list[1]));
+if (list[0] == "Return") return std::make_shared<Return>();
 
-if (list[0] == "Sub") return std::make_unique<Sub>();
+if (list[0] == "SetLocal") return std::make_shared<SetLocal>(std::stoi(list[1]));
 
-if (list[0] == "UnsetAddr") return std::make_unique<UnsetAddr>(list[1]);
+if (list[0] == "Sub") return std::make_shared<Sub>();
+
+if (list[0] == "UnsetAddr") return std::make_shared<UnsetAddr>(list[1]);
 
 throw std::runtime_error("Unknown inst type" + list[0]);
 }
