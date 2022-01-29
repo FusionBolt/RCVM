@@ -13,24 +13,21 @@
 #include <memory>
 
 namespace RCVM {
-    std::vector<std::string> split(std::string_view str, char c = ' ') {
-        size_t index = 0;
-        std::vector<std::string> str_list;
-        for (size_t i = 0; i < str.size(); ++i) {
-            if (str[i] == c) {
-                auto slice_str = str.substr(index, i);
-                str_list.emplace_back(slice_str);
-                while (str[i + 1] == c) {
-                    ++i;
-                }
-                index = i + 1;
-            }
+    template<typename Out>
+    void split(const std::string &s, char delim, Out result) {
+        std::stringstream ss;
+        ss.str(s);
+        std::string item;
+        while (std::getline(ss, item, delim)) {
+            *(result++) = item;
         }
-        if (index != str.size()) {
-            auto slice_str = str.substr(index, str.size());
-            str_list.emplace_back(slice_str);
-        }
-        return str_list;
+    }
+
+
+    std::vector<std::string> split(const std::string &s, char delim = ' ') {
+        std::vector<std::string> elems;
+        split(s, delim, std::back_inserter(elems));
+        return elems;
     }
 
     class VMParser {
