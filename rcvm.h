@@ -2,7 +2,10 @@
 #include "instructions.hpp"
 #include "eval_stack.h"
 #include "symbol_table.hpp"
+#include "rc_object.h"
+#include "gc.h"
 
+#define DEBUG
 // todo:log option for enable dump pc, stack pointer...
 #ifdef DEBUG
 #define LOG_DEBUG(info) std::cout << info << std::endl;
@@ -55,14 +58,14 @@ namespace RCVM
         {
             if(!_sym_table.contains(klass) || !_sym_table[klass]._methods.contains(f))
             {
-                throw std::runtime_error("Target Function" + f + "Not Found");
+                throw std::runtime_error("Target Function:" + f + " Not Found");
             }
 
             // todo: find definition
             auto &fun = _sym_table[klass]._methods[f];
             if(fun.begin == UndefinedAddr)
             {
-                fun.begin = load_method(fun);
+                fun.begin = load_method(klass, f, fun);
             }
             // todo: var args
             // 1. stack process
@@ -72,8 +75,9 @@ namespace RCVM
             LOG_DEBUG("Call " + f + " PC:" + std::to_string(_pc))
         }
 
-        size_t load_method(const FunInfo& f)
+        size_t load_method(const std::string& klass, const std::string& name, const FunInfo& f)
         {
+            LOG_DEBUG("Load Function:" + name + " in Class:" + klass)
             // 1. get start
             auto start = std::max<int>(0, static_cast<int>(_inst_list.size() - 1));
             // todo:need reset inst list in f? it can be replaced with unique_ptr?
@@ -95,6 +99,7 @@ namespace RCVM
     private:
         void init()
         {
+            auto *kernel = new RcObject();
             begin_call(VMGlobalClass, VMEntryFun);
             LOG_DEBUG("Init:Jump To Main")
             LOG_DEBUG("Current PC:" + std::to_string(_pc))
@@ -153,7 +158,7 @@ namespace RCVM
                 case InstType::UnsetAddr:
                     break;
                 case InstType::Alloc:
-                    break;
+                    visit(static_cast<const Alloc&>(inst));break;
             }
         }
 
@@ -224,6 +229,11 @@ namespace RCVM
             LOG_DEBUG("SetLocal Pos:" + std::to_string(inst.offset) + " value:" + std::to_string(v));
         }
 
+        void visit(const Alloc &inst)
+        {
+            gc.new_obj(inst.class_type);
+        }
+
     private:
         VM &_vm;
         EvalStack &_eval_stack;
@@ -240,9 +250,12 @@ namespace RCVM
         {
             _pc++;
             auto &inst = _inst_list[_pc];
+            LOG_DEBUG("Current Inst: " + inst->to_string());
             _visitor->accept(*inst);
+            LOG_DEBUG("Current Stack:")
             print(_eval_stack.current_data());
         }
         LOG_DEBUG("VM End")
     }
+
 }
