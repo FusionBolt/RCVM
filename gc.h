@@ -8,15 +8,14 @@ namespace RCVM
     class GC
     {
     public:
-        RcObject *new_obj([[maybe_unused]] const std::string& klass) {
-            auto pointer = new RcObject();
-            if(pointer == nullptr)
-            {
-                run();
-            }
-            obj_list.insert(pointer);
-            // compute klass size
-            return pointer;
+        RcObject *stack_obj_alloc(const std::string& klass)
+        {
+            return new_obj(klass, GC_TAG_STACK);
+        }
+
+        RcObject *static_obj_alloc(const std::string& klass)
+        {
+            return new_obj(klass, GC_TAG_STATIC);
         }
 
         void run()
@@ -46,6 +45,18 @@ namespace RCVM
 
         }
     private:
+        RcObject *new_obj(const std::string& klass, Flag flag) {
+            auto pointer = new RcObject(klass, flag);
+            if(pointer == nullptr)
+            {
+                throw std::runtime_error("alloc nullptr");
+                //run();
+            }
+            obj_list.insert(pointer);
+            // compute klass size
+            return pointer;
+        }
+
         std::set<RcObject *> obj_list;
     };
     GC gc;

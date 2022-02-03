@@ -15,7 +15,7 @@
 
 namespace RCVM
 {
-    void print(const std::vector<int>& vars)
+    void print(const std::vector<long>& vars)
     {
         LOG_DEBUG("Print Current Stack:")
         for (int i = 0; i < vars.size(); ++i)
@@ -63,13 +63,18 @@ namespace RCVM
 
             // todo: find definition
             auto &fun = _sym_table[klass]._methods[f];
+            auto this_ptr = _eval_stack.get_this(fun.argc);
+            if(this_ptr == nullptr)
+            {
+                throw std::runtime_error("ThisPtr is nullptr");
+            }
             if(fun.begin == UndefinedAddr)
             {
                 fun.begin = load_method(klass, f, fun);
             }
             // todo: var args
             // 1. stack process
-            _eval_stack.begin_call(fun.argc, fun.locals, _pc);
+            _eval_stack.begin_call(fun.argc, fun.locals, _pc, this_ptr);
             // 2. set pc
             _pc = fun.begin;
             LOG_DEBUG("Call " + f + " PC:" + std::to_string(_pc))
@@ -99,7 +104,8 @@ namespace RCVM
     private:
         void init()
         {
-            auto *kernel = new RcObject();
+            auto *kernel = gc.static_obj_alloc(VMGlobalClass);
+            _eval_stack.push_pointer(kernel);
             begin_call(VMGlobalClass, VMEntryFun);
             LOG_DEBUG("Init:Jump To Main")
             LOG_DEBUG("Current PC:" + std::to_string(_pc))
@@ -231,7 +237,8 @@ namespace RCVM
 
         void visit(const Alloc &inst)
         {
-            gc.new_obj(inst.class_type);
+            auto obj = gc.stack_obj_alloc(inst.class_type);
+            _eval_stack.push_pointer(obj);
         }
 
     private:
@@ -246,6 +253,7 @@ namespace RCVM
         _visitor = std::make_unique<VMInstVisitor>(*this);
         init();
         LOG_DEBUG("VM Init Finish")
+        // todo:check init ok
         while(_pc < _inst_list.size() && !can_stop())
         {
             _pc++;
