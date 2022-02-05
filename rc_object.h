@@ -19,7 +19,7 @@ namespace RCVM {
         // flag
         Flag _flag;
 
-        const string &getKlass() const {
+        const string &klass() const {
             return _klass;
         }
 
@@ -43,11 +43,23 @@ namespace RCVM {
     public:
         RcObject(std::string klass, Flag flag) : basic(std::move(klass), flag) {}
         bool get_mark() const {
-            return basic.has_flag(GC_TAG_MARK);
+            return has_flag(GC_TAG_MARK);
+        }
+
+        bool has_flag(Flag flag) const {
+            return basic.has_flag(flag);
+        }
+
+        Flag flag() const {
+            return basic.flag();
         }
 
         void make_mark() {
             basic.add_flag(GC_TAG_MARK);
+        }
+
+        std::string klass() const {
+            return basic.klass();
         }
     };
 }

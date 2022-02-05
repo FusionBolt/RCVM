@@ -2,21 +2,6 @@
 #include "stack_frame.h"
 #include "rc_object.h"
 
-class O{
-    O() = default;
-    O(std::shared_ptr<O> _o) : o(_o) {}
-    std::shared_ptr<O> o;
-};
-class F {
-    F() : o(std::shared_ptr<O>(nullptr)) {}
-
-    void f()
-    {
-        o = std::shared_ptr<O>(o);
-    }
-    std::shared_ptr<O> o;
-};
-
 namespace RCVM {
     class EvalStack {
     public:
@@ -70,19 +55,25 @@ namespace RCVM {
             return *reinterpret_cast<uintptr_t*>(get_top_offset(offset));
         }
 
-        RcObject *get_this(size_t argc) {
+        RcObject *get_object(size_t argc) {
             // neg offset
             auto ptr = get_top_pointer_value(static_cast<int>(-(argc + 1)));
             return reinterpret_cast<RcObject*>(ptr);
         }
 
-        void begin_call(size_t argc, size_t locals, size_t ret_addr, RcObject *this_ptr)
+        void begin_call(size_t argc, size_t locals, size_t ret_addr)
         {
-            // 1.set stack base
+            // 1. get new this_ptr
+            auto this_ptr = get_object(argc);
+            if(this_ptr == nullptr)
+            {
+                throw std::runtime_error("ThisPtr is nullptr");
+            }
+            // 2.set stack base
             auto *base = get_args_begin(argc);
-            // 2.alloc local var space
+            // 3.alloc local var space
             _stack_top = stack_move(base, static_cast<int>(locals));
-            // 3.create new stack frame
+            // 4.create new stack frame
             _frame = std::make_shared<StackFrame>(nullptr, base, ret_addr, this_ptr);
         }
 
@@ -118,6 +109,9 @@ namespace RCVM {
             return vars;
         }
 
+        std::weak_ptr<StackFrame> get_current_frame() const {
+            return _frame;
+        }
     private:
         Pointer stack_move(Pointer stack_pos, int offset) const
         {

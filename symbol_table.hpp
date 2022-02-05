@@ -3,6 +3,7 @@
 #include <map>
 #include <utility>
 #include "compiler_defs.h"
+#include "instructions.hpp"
 
 namespace RCVM {
     struct FunInfo {
@@ -75,4 +76,12 @@ namespace RCVM {
         std::vector<std::string> _vars;
         SymbolTable<FunInfo> _methods;
     };
+
+    using ClassSymbolTable = SymbolTable<ClassInfo>;
+    inline ClassSymbolTable global_class_table;
+
+    void init_class_symbol_table(ClassSymbolTable&& table)
+    {
+        global_class_table = table;
+    }
 }

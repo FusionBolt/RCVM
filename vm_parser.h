@@ -37,6 +37,10 @@ namespace RCVM {
 
         SymbolTable<ClassInfo> parse() {
             std::ifstream f(_path);
+            if(!f.good())
+            {
+                throw std::runtime_error("no input file:" + _path);
+            }
             std::string str;
             SymbolTable<ClassInfo> class_table;
             while (std::getline(f, str)) {

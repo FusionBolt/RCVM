@@ -26,9 +26,6 @@ namespace RCVM
         LOG_DEBUG("End Print")
     }
 
-    using FunctionSymbolTable = SymbolTable<FunInfo>;
-    using ClassSymbolTable = SymbolTable<ClassInfo>;
-
     class VMInstVisitor;
     class VM
     {
@@ -37,44 +34,29 @@ namespace RCVM
         constexpr static auto VMGlobalClass = "Kernel";
         VM() = default;
 
-        void run(ClassSymbolTable&& table);
+        void run();
 
         EvalStack& eval_stack()
         {
             return _eval_stack;
         }
 
-        [[nodiscard]] const ClassSymbolTable & sym_table() const
-        {
-            return _sym_table;
-        }
-
-        [[nodiscard]] ClassSymbolTable& sym_table()
-        {
-            return _sym_table;
-        }
-
         void begin_call(const std::string& klass, const std::string& f)
         {
-            if(!_sym_table.contains(klass) || !_sym_table[klass]._methods.contains(f))
+            if(!global_class_table.contains(klass) || !global_class_table[klass]._methods.contains(f))
             {
                 throw std::runtime_error("Target Function:" + f + " Not Found");
             }
 
             // todo: find definition
-            auto &fun = _sym_table[klass]._methods[f];
-            auto this_ptr = _eval_stack.get_this(fun.argc);
-            if(this_ptr == nullptr)
-            {
-                throw std::runtime_error("ThisPtr is nullptr");
-            }
+            auto &fun = global_class_table[klass]._methods[f];
             if(fun.begin == UndefinedAddr)
             {
                 fun.begin = load_method(klass, f, fun);
             }
             // todo: var args
             // 1. stack process
-            _eval_stack.begin_call(fun.argc, fun.locals, _pc, this_ptr);
+            _eval_stack.begin_call(fun.argc, fun.locals, _pc);
             // 2. set pc
             _pc = fun.begin;
             LOG_DEBUG("Call " + f + " PC:" + std::to_string(_pc))
@@ -104,7 +86,7 @@ namespace RCVM
     private:
         void init()
         {
-            auto *kernel = gc.static_obj_alloc(VMGlobalClass);
+            auto *kernel = gc.alloc_static_obj(VMGlobalClass);
             _eval_stack.push_pointer(kernel);
             begin_call(VMGlobalClass, VMEntryFun);
             LOG_DEBUG("Init:Jump To Main")
@@ -114,7 +96,6 @@ namespace RCVM
         friend class VMInstVisitor;
         std::shared_ptr<VMInstVisitor> _visitor;
         std::vector<std::shared_ptr<VMInst>> _inst_list;
-        ClassSymbolTable _sym_table;
         size_t _pc = 0;
         EvalStack _eval_stack;
         std::string _cur_fun;
@@ -123,7 +104,7 @@ namespace RCVM
 
     class VMInstVisitor {
     public:
-        VMInstVisitor(VM &vm) : _vm(vm), _eval_stack(_vm.eval_stack()), _sym_table(_vm.sym_table()) {}
+        VMInstVisitor(VM &vm) : _vm(vm), _eval_stack(_vm.eval_stack()){}
 
         void accept(const VMInst &inst)
         {
@@ -237,18 +218,16 @@ namespace RCVM
 
         void visit(const Alloc &inst)
         {
-            auto obj = gc.stack_obj_alloc(inst.class_type);
+            auto obj = gc.alloc_stack_obj(inst.class_type);
             _eval_stack.push_pointer(obj);
         }
 
     private:
         VM &_vm;
         EvalStack &_eval_stack;
-        ClassSymbolTable &_sym_table;
     };
 
-    void VM::run(ClassSymbolTable&& sym_table) {
-        _sym_table = sym_table;
+    void VM::run() {
         LOG_DEBUG("VM Start")
         _visitor = std::make_unique<VMInstVisitor>(*this);
         init();
