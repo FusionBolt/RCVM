@@ -4,26 +4,19 @@
 #include "symbol_table.hpp"
 #include "rc_object.h"
 #include "gc.h"
-
-#define DEBUG
-// todo:log option for enable dump pc, stack pointer...
-#ifdef DEBUG
-#define LOG_DEBUG(info) std::cout << info << std::endl;
-#else
-#define LOG_DEBUG(info)
-#endif
+#include "logger.h"
 
 namespace RCVM
 {
     void print(const std::vector<long>& vars)
     {
-        LOG_DEBUG("Print Current Stack:")
+        LOG_DEBUG("Print Current Stack:");
         for (int i = 0; i < vars.size(); ++i)
         {
             std::cout << vars[i] << " ";
         }
         std::cout << std::endl;
-        LOG_DEBUG("End Print")
+        LOG_DEBUG("End Print");
     }
 
     class VMInstVisitor;
@@ -59,14 +52,14 @@ namespace RCVM
             _eval_stack.begin_call(fun.argc, fun.locals, _pc);
             // 2. set pc
             _pc = fun.begin;
-            LOG_DEBUG("Call " + f + " PC:" + std::to_string(_pc))
+            EXEC_LOG("Call " + f + " PC:" + std::to_string(_pc));
         }
 
         size_t load_method(const std::string& klass, const std::string& name, const FunInfo& f)
         {
-            LOG_DEBUG("Load Function:" + name + " in Class:" + klass)
+            EXEC_LOG("Load Function:" + name + " in Class:" + klass);
             // 1. get start
-            auto start = std::max<int>(0, static_cast<int>(_inst_list.size() - 1));
+            auto start = static_cast<int>(_inst_list.size());
             // todo:need reset inst list in f? it can be replaced with unique_ptr?
             // 2. load inst to inst_list
             for(auto &&inst : f.inst_list)
@@ -79,7 +72,7 @@ namespace RCVM
         void end_call()
         {
             _pc = _eval_stack.end_call();
-            LOG_DEBUG("Return")
+            EXEC_LOG("Return");
         }
 
         bool can_stop() const { return _eval_stack.empty(); }
@@ -89,8 +82,8 @@ namespace RCVM
             auto *kernel = gc.alloc_static_obj(VMGlobalClass);
             _eval_stack.push_pointer(kernel);
             begin_call(VMGlobalClass, VMEntryFun);
-            LOG_DEBUG("Init:Jump To Main")
-            LOG_DEBUG("Current PC:" + std::to_string(_pc))
+            STATE_LOG("Init:Jump To Main");
+            LOG_DEBUG("Current PC:" + std::to_string(_pc));
         }
 
         friend class VMInstVisitor;
@@ -228,21 +221,20 @@ namespace RCVM
     };
 
     void VM::run() {
-        LOG_DEBUG("VM Start")
+        STATE_LOG("VM Start");
         _visitor = std::make_unique<VMInstVisitor>(*this);
         init();
-        LOG_DEBUG("VM Init Finish")
+        STATE_LOG("VM Init Finish");
         // todo:check init ok
         while(_pc < _inst_list.size() && !can_stop())
         {
-            _pc++;
             auto &inst = _inst_list[_pc];
-            LOG_DEBUG("Current Inst: " + inst->to_string());
+            INST_LOG(inst->to_string());
             _visitor->accept(*inst);
-            LOG_DEBUG("Current Stack:")
-            print(_eval_stack.current_data());
+            STACK_LOG("Current Stack:");
+            // print(_eval_stack.current_data());
+            _pc++;
         }
-        LOG_DEBUG("VM End")
+        STATE_LOG("VM End");
     }
-
 }

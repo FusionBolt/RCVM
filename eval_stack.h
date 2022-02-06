@@ -109,8 +109,16 @@ namespace RCVM {
             return vars;
         }
 
-        std::weak_ptr<StackFrame> get_current_frame() const {
+        std::weak_ptr<StackFrame> current_frame() const {
             return _frame;
+        }
+
+        Pointer bottom() const {
+            return _stack_bottom;
+        }
+
+        Pointer top() const {
+            return _stack_top;
         }
     private:
         Pointer stack_move(Pointer stack_pos, int offset) const

@@ -59,3 +59,5 @@ endif()
 
 add_executable(RCVM
         main.cpp)
+
+target_link_libraries(RCVM CONAN_PKG::glog)

@@ -26,6 +26,7 @@ class RCVMConan(ConanFile):
 
     def requirements(self):
         self.requires("gtest/1.10.0")
+        self.requires("glog/0.5.0")
         if self.options.RCVM_TEST:
             # require a test package
             pass

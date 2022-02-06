@@ -14,6 +14,15 @@ public:
     }
 };
 
+TEST(EvalStackTest, default_status)
+{
+    EvalStack stack;
+    auto frame = stack.current_frame().lock();
+    ASSERT_NE(frame, nullptr);
+    ASSERT_EQ(frame->prev(), nullptr);
+    ASSERT_EQ(stack.bottom(), stack.top());
+}
+
 TEST(EvalStackTest, push_normal_value)
 {
     EvalStack stack;
@@ -48,9 +57,19 @@ TEST(EvalStackTest, fun_call)
     EvalStack stack;
     auto obj = gc.alloc_stack_obj("Foo");
     stack.push_pointer(obj);
-    stack.begin_call(3, 5, 0);
-    auto frame = stack.get_current_frame();
+    // push args
+    auto argc = 2;
+    stack.push(1);
+    stack.push(2);
+    auto *o = stack.get_object(argc);
+    ASSERT_EQ(obj, o);
+    auto bottom_frame = stack.current_frame();
+
+    stack.begin_call(argc, 3, 0);
+    auto frame = stack.current_frame();
+    ASSERT_EQ(frame.lock()->prev(), bottom_frame.lock());
     stack.end_call();
+    ASSERT_EQ(bottom_frame.lock(), stack.current_frame().lock());
 }
 
 int main(int argc, char *argv[])
