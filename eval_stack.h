@@ -61,6 +61,10 @@ namespace RCVM {
             return reinterpret_cast<RcObject*>(ptr);
         }
 
+        RcObject *this_ptr() const {
+            return _frame->this_ptr();
+        }
+
         void begin_call(size_t argc, size_t locals, size_t ret_addr)
         {
             // 1. get new this_ptr
@@ -74,7 +78,9 @@ namespace RCVM {
             // 3.alloc local var space
             _stack_top = stack_move(base, static_cast<int>(locals));
             // 4.create new stack frame
-            _frame = std::make_shared<StackFrame>(nullptr, base, ret_addr, this_ptr);
+            _frame = std::make_shared<StackFrame>(_frame, base, ret_addr, this_ptr);
+            // 5.increase depth
+            ++_depth;
         }
 
         size_t end_call()
@@ -85,6 +91,7 @@ namespace RCVM {
             return ret_addr;
         }
 
+        size_t depth() const { return _depth; }
         // positive only
         WordT get_local(size_t offset)
         {
@@ -109,8 +116,8 @@ namespace RCVM {
             return vars;
         }
 
-        std::weak_ptr<StackFrame> current_frame() const {
-            return _frame;
+        StackFrame* current_frame() const {
+            return _frame.get();
         }
 
         Pointer bottom() const {
@@ -156,5 +163,6 @@ namespace RCVM {
         std::shared_ptr<StackFrame> _frame;
         Pointer _stack_top;
         Pointer _stack_bottom;
+        size_t _depth = 0;
     };
 }

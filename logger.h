@@ -4,8 +4,8 @@
 namespace RCVM {
     struct LoggerStatus {
         bool inst = true;
-        bool state = true;
-        bool exec = true;
+        bool state = false;
+        bool exec = false;
         bool stack = false;
     };
 

@@ -40,7 +40,7 @@ public:
 
   std::string to_string() override 
   { 
-    return "";
+    return "Add:";
   }
 
 
@@ -53,7 +53,7 @@ public:
 
   std::string to_string() override 
   { 
-    return seg +std::to_string(offset);
+    return "Addr:"+seg +std::to_string(offset);
   }
 
 string seg;
@@ -67,7 +67,7 @@ public:
 
   std::string to_string() override 
   { 
-    return class_type;
+    return "Alloc:"+class_type;
   }
 
 string class_type;
@@ -80,7 +80,7 @@ public:
 
   std::string to_string() override 
   { 
-    return klass +target;
+    return "Call:"+klass +target;
   }
 
 string klass;
@@ -94,7 +94,7 @@ public:
 
   std::string to_string() override 
   { 
-    return cond +std::to_string(addr);
+    return "CondJump:"+cond +std::to_string(addr);
   }
 
 string cond;
@@ -108,7 +108,7 @@ public:
 
   std::string to_string() override 
   { 
-    return target;
+    return "DirectJump:"+target;
   }
 
 string target;
@@ -121,7 +121,7 @@ public:
 
   std::string to_string() override 
   { 
-    return "";
+    return "Div:";
   }
 
 
@@ -134,7 +134,7 @@ public:
 
   std::string to_string() override 
   { 
-    return name;
+    return "FunLabel:"+name;
   }
 
 string name;
@@ -147,7 +147,7 @@ public:
 
   std::string to_string() override 
   { 
-    return std::to_string(offset);
+    return "GetLocal:"+std::to_string(offset);
   }
 
 int offset;
@@ -160,7 +160,7 @@ public:
 
   std::string to_string() override 
   { 
-    return name;
+    return "Label:"+name;
   }
 
 string name;
@@ -173,7 +173,7 @@ public:
 
   std::string to_string() override 
   { 
-    return std::to_string(offset);
+    return "LocalVarOperator:"+std::to_string(offset);
   }
 
 int offset;
@@ -186,7 +186,7 @@ public:
 
   std::string to_string() override 
   { 
-    return "";
+    return "Mul:";
   }
 
 
@@ -199,7 +199,7 @@ public:
 
   std::string to_string() override 
   { 
-    return std::to_string(pos);
+    return "Pop:"+std::to_string(pos);
   }
 
 int pos;
@@ -212,7 +212,7 @@ public:
 
   std::string to_string() override 
   { 
-    return std::to_string(value);
+    return "Push:"+std::to_string(value);
   }
 
 int value;
@@ -225,7 +225,7 @@ public:
 
   std::string to_string() override 
   { 
-    return "";
+    return "Return:";
   }
 
 
@@ -238,7 +238,7 @@ public:
 
   std::string to_string() override 
   { 
-    return std::to_string(offset);
+    return "SetLocal:"+std::to_string(offset);
   }
 
 int offset;
@@ -251,7 +251,7 @@ public:
 
   std::string to_string() override 
   { 
-    return "";
+    return "Sub:";
   }
 
 
@@ -264,7 +264,7 @@ public:
 
   std::string to_string() override 
   { 
-    return unset_addr;
+    return "UnsetAddr:"+unset_addr;
   }
 
 string unset_addr;

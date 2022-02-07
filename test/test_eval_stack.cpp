@@ -17,7 +17,7 @@ public:
 TEST(EvalStackTest, default_status)
 {
     EvalStack stack;
-    auto frame = stack.current_frame().lock();
+    auto frame = stack.current_frame();
     ASSERT_NE(frame, nullptr);
     ASSERT_EQ(frame->prev(), nullptr);
     ASSERT_EQ(stack.bottom(), stack.top());
@@ -67,9 +67,9 @@ TEST(EvalStackTest, fun_call)
 
     stack.begin_call(argc, 3, 0);
     auto frame = stack.current_frame();
-    ASSERT_EQ(frame.lock()->prev(), bottom_frame.lock());
+    ASSERT_EQ(frame->prev().get(), bottom_frame);
     stack.end_call();
-    ASSERT_EQ(bottom_frame.lock(), stack.current_frame().lock());
+    ASSERT_EQ(bottom_frame, stack.current_frame());
 }
 
 int main(int argc, char *argv[])

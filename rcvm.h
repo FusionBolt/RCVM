@@ -29,6 +29,18 @@ namespace RCVM
 
         void run();
 
+        void pc_increase()
+        {
+            if(_pc_need_incr)
+            {
+                ++_pc;
+            }
+            else
+            {
+                _pc_need_incr = true;
+            }
+        }
+
         EvalStack& eval_stack()
         {
             return _eval_stack;
@@ -49,7 +61,7 @@ namespace RCVM
             }
             // todo: var args
             // 1. stack process
-            _eval_stack.begin_call(fun.argc, fun.locals, _pc);
+            _eval_stack.begin_call(fun.argc, fun.locals, _pc + 1);
             // 2. set pc
             _pc = fun.begin;
             EXEC_LOG("Call " + f + " PC:" + std::to_string(_pc));
@@ -66,22 +78,26 @@ namespace RCVM
             {
                 _inst_list.push_back(inst);
             }
+            _pc_need_incr = false;
             return start;
         }
 
         void end_call()
         {
             _pc = _eval_stack.end_call();
+            _pc_need_incr = false;
+            _can_stop = _eval_stack.current_frame()->prev() == nullptr;
             EXEC_LOG("Return");
         }
 
-        bool can_stop() const { return _eval_stack.empty(); }
+        bool can_stop() const { return _can_stop; }
     private:
         void init()
         {
             auto *kernel = gc.alloc_static_obj(VMGlobalClass);
             _eval_stack.push_pointer(kernel);
             begin_call(VMGlobalClass, VMEntryFun);
+            _pc_need_incr = true;
             STATE_LOG("Init:Jump To Main");
             LOG_DEBUG("Current PC:" + std::to_string(_pc));
         }
@@ -93,6 +109,7 @@ namespace RCVM
         EvalStack _eval_stack;
         std::string _cur_fun;
         bool _can_stop = false;
+        bool _pc_need_incr = true;
     };
 
     class VMInstVisitor {
@@ -199,14 +216,14 @@ namespace RCVM
         {
             auto v = _eval_stack.get_local(inst.offset);
             _eval_stack.push(v);
-            LOG_DEBUG("GetLocal Pos:" + std::to_string(inst.offset) + " value:" + std::to_string(v));
+            EXEC_LOG("GetLocal Pos:" + std::to_string(inst.offset) + " value:" + std::to_string(v));
         }
 
         void visit(const SetLocal &inst)
         {
             auto v = _eval_stack.pop();
             _eval_stack.set_local(inst.offset, v);
-            LOG_DEBUG("SetLocal Pos:" + std::to_string(inst.offset) + " value:" + std::to_string(v));
+            EXEC_LOG("SetLocal Pos:" + std::to_string(inst.offset) + " value:" + std::to_string(v));
         }
 
         void visit(const Alloc &inst)
@@ -232,8 +249,9 @@ namespace RCVM
             INST_LOG(inst->to_string());
             _visitor->accept(*inst);
             STACK_LOG("Current Stack:");
+            // LOG(INFO) << _eval_stack.depth() << " " << _pc << " " << _inst_list.size();
             // print(_eval_stack.current_data());
-            _pc++;
+            pc_increase();
         }
         STATE_LOG("VM End");
     }
