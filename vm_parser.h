@@ -74,6 +74,7 @@ namespace RCVM {
                 ClassInfo class_info(member_vars, fun_table);
                 class_table.define(class_name, class_info);
             }
+            f.close();
             return class_table;
         }
 

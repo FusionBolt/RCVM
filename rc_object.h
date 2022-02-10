@@ -41,7 +41,10 @@ namespace RCVM {
         RcBasic basic;
         // value
     public:
-        RcObject(std::string klass, Flag flag) : basic(std::move(klass), flag) {}
+        std::vector<RcObject*> fields;
+
+        RcObject(std::string klass, Flag flag, size_t vars)
+            : basic(std::move(klass), flag), fields(vars, nullptr) {}
         bool get_mark() const {
             return has_flag(GC_TAG_MARK);
         }

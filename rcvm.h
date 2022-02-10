@@ -5,18 +5,28 @@
 #include "rc_object.h"
 #include "gc.h"
 #include "logger.h"
+#include "debug_util.h"
 
 namespace RCVM
 {
-    void print(const std::vector<long>& vars)
+    void print(const std::vector<long> &vars)
     {
-        LOG_DEBUG("Print Current Stack:");
+        std::stringstream s;
         for (int i = 0; i < vars.size(); ++i)
         {
-            std::cout << vars[i] << " ";
+            s << vars[i] << " ";
         }
-        std::cout << std::endl;
-        LOG_DEBUG("End Print");
+        STACK_LOG(s.str());
+    }
+
+    void print_all_frame_data(const std::vector<std::vector<long>> &data)
+    {
+        STACK_LOG("Print Stack Frame:");
+        for(auto &frame_data : data)
+        {
+            print(frame_data);
+        }
+        STACK_LOG("End Frame");
     }
 
     class VMInstVisitor;
@@ -46,8 +56,10 @@ namespace RCVM
             return _eval_stack;
         }
 
-        void begin_call(const std::string& klass, const std::string& f)
+        void begin_call(const std::string& f, size_t argc)
         {
+            auto *obj = _eval_stack.get_object(argc);
+            auto klass = obj->klass();
             if(!global_class_table.contains(klass) || !global_class_table[klass]._methods.contains(f))
             {
                 throw std::runtime_error("Target Function:" + f + " Not Found");
@@ -64,7 +76,8 @@ namespace RCVM
             _eval_stack.begin_call(fun.argc, fun.locals, _pc + 1);
             // 2. set pc
             _pc = fun.begin;
-            EXEC_LOG("Call " + f + " PC:" + std::to_string(_pc));
+            EXEC_LOG("Call " + f + " new PC:" + std::to_string(_pc) + " ret pc:"
+                + std::to_string(_eval_stack.current_frame()->ret_addr()));
         }
 
         size_t load_method(const std::string& klass, const std::string& name, const FunInfo& f)
@@ -96,7 +109,7 @@ namespace RCVM
         {
             auto *kernel = gc.alloc_static_obj(VMGlobalClass);
             _eval_stack.push_pointer(kernel);
-            begin_call(VMGlobalClass, VMEntryFun);
+            begin_call(VMEntryFun, 0);
             _pc_need_incr = true;
             STATE_LOG("Init:Jump To Main");
             LOG_DEBUG("Current PC:" + std::to_string(_pc));
@@ -156,6 +169,8 @@ namespace RCVM
                     break;
                 case InstType::Alloc:
                     visit(static_cast<const Alloc&>(inst));break;
+                case InstType::PushThis:
+                    visit(static_cast<const PushThis&>(inst));break;
             }
         }
 
@@ -197,7 +212,7 @@ namespace RCVM
             }
             else
             {
-                _vm.begin_call(inst.klass, inst.target);
+                _vm.begin_call(inst.target, inst.argc);
             }
             // set value for stack frame
         }
@@ -232,6 +247,10 @@ namespace RCVM
             _eval_stack.push_pointer(obj);
         }
 
+        void visit([[maybe_unused]] const PushThis &inst)
+        {
+            _eval_stack.push_pointer(_eval_stack.this_ptr());
+        }
     private:
         VM &_vm;
         EvalStack &_eval_stack;
@@ -243,15 +262,17 @@ namespace RCVM
         init();
         STATE_LOG("VM Init Finish");
         // todo:check init ok
-        while(_pc < _inst_list.size() && !can_stop())
-        {
+        while (_pc < _inst_list.size() && !can_stop()) {
             auto &inst = _inst_list[_pc];
             INST_LOG(inst->to_string());
             _visitor->accept(*inst);
-            STACK_LOG("Current Stack:");
-            // LOG(INFO) << _eval_stack.depth() << " " << _pc << " " << _inst_list.size();
-            // print(_eval_stack.current_data());
+            STACK_LOG("Current Stack Info:");
+            STACK_LOG("") << "depth:" << _eval_stack.depth() << " pc:" << _pc << " inst_list size:"
+                          << _inst_list.size();
+            print(_eval_stack.current_data());
+            print_all_frame_data(_eval_stack.all_frame_data());
             pc_increase();
+            dump_inst(_inst_list, "inst.txt");
         }
         STATE_LOG("VM End");
     }

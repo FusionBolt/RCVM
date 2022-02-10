@@ -19,6 +19,7 @@ TEST(EvalStackTest, default_status)
     EvalStack stack;
     auto frame = stack.current_frame();
     ASSERT_NE(frame, nullptr);
+    ASSERT_EQ(frame->base(), stack.bottom());
     ASSERT_EQ(frame->prev(), nullptr);
     ASSERT_EQ(stack.bottom(), stack.top());
 }
@@ -55,6 +56,7 @@ TEST(EvalStackTest, exec)
 TEST(EvalStackTest, fun_call)
 {
     EvalStack stack;
+    auto old_top = stack.top();
     auto obj = gc.alloc_stack_obj("Foo");
     stack.push_pointer(obj);
     // push args
@@ -69,6 +71,7 @@ TEST(EvalStackTest, fun_call)
     auto frame = stack.current_frame();
     ASSERT_EQ(frame->prev().get(), bottom_frame);
     stack.end_call();
+    ASSERT_EQ(old_top + EvalStack::MoveOffset, stack.top());
     ASSERT_EQ(bottom_frame, stack.current_frame());
 }
 

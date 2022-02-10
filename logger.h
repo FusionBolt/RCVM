@@ -5,8 +5,8 @@ namespace RCVM {
     struct LoggerStatus {
         bool inst = true;
         bool state = false;
-        bool exec = false;
-        bool stack = false;
+        bool exec = true;
+        bool stack = true;
     };
 
     void init_logger(char* argv[])

@@ -10,7 +10,7 @@ namespace RCVM {
         // 2MB stack memory
         EvalStack() :
                 _memory(std::make_unique<unsigned char[]>(1024 * 2048)),
-                _frame(std::make_shared<StackFrame>(nullptr, nullptr, 0, nullptr)),
+                _frame(std::make_shared<StackFrame>(nullptr, _memory.get(), 0, nullptr)),
                 _stack_top(_memory.get()),
                 _stack_bottom(_stack_top) { }
 
@@ -18,7 +18,7 @@ namespace RCVM {
         EvalStack operator=(const EvalStack&) = delete;
 
         void push(long value) {
-            top_value() = value;
+            write_pos_value() = value;
             stack_move(1);
         }
 
@@ -32,7 +32,7 @@ namespace RCVM {
         WordT pop()
         {
             stack_move(-1);
-            auto value = top_value();
+            auto value = write_pos_value();
             return value;
         }
 
@@ -43,7 +43,7 @@ namespace RCVM {
             push(new_v);
         }
 
-        WordT& top_value() {
+        WordT& write_pos_value() {
             return get_value(0);
         }
 
@@ -85,9 +85,15 @@ namespace RCVM {
 
         size_t end_call()
         {
+            // todo: test end call, ret value and frame base
+            // 1. get ret addr
             auto ret_addr = _frame->ret_addr();
-            _stack_top = stack_move(_frame->base(), -1);
+            // 2. stack back
+            _stack_top = _frame->base();
+            // 3. frame back
             _frame = _frame->prev();
+            // 4.decrease depth
+            --_depth;
             return ret_addr;
         }
 
@@ -103,8 +109,6 @@ namespace RCVM {
             *get_base_offset(static_cast<int>(offset)) = value;
         }
 
-        bool empty() const { return _frame == nullptr; }
-
         // todo:const
         std::vector<WordT> current_data()
         {
@@ -116,15 +120,41 @@ namespace RCVM {
             return vars;
         }
 
+        std::vector<WordT> frame_data(const StackFrame *frame, const Pointer next_base)
+        {
+            std::vector<WordT> vars;
+            auto count = (next_base - frame->base()) / MoveOffset;
+            for (int i = 0; i < count; ++i) {
+                vars.push_back(*get_frame_base_offset(frame, i));
+            }
+            return vars;
+        }
+
+        std::vector<std::vector<WordT>> all_frame_data()
+        {
+            auto data = std::vector<std::vector<WordT>>();
+            auto frame = current_frame();
+            Pointer next_base = _stack_top;
+            while(frame != nullptr)
+            {
+                data.push_back(frame_data(frame, next_base));
+                next_base = frame->base();
+                frame = frame->prev().get();
+            }
+            std::reverse(data.begin(), data.end());
+            return data;
+        }
+
+
         StackFrame* current_frame() const {
             return _frame.get();
         }
 
-        Pointer bottom() const {
+        ConstPointer bottom() const {
             return _stack_bottom;
         }
 
-        Pointer top() const {
+        ConstPointer top() const {
             return _stack_top;
         }
     private:
@@ -146,6 +176,11 @@ namespace RCVM {
         WordT *get_base_offset(int offset)
         {
             return get_offset_pos(_frame->base(), offset);
+        }
+
+        WordT *get_frame_base_offset(const StackFrame *frame, int offset)
+        {
+            return get_offset_pos(frame->base(), offset);
         }
 
         WordT *get_offset_pos(Pointer base, int offset)

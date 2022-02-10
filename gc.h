@@ -51,7 +51,8 @@ namespace RCVM
             {
                 throw std::runtime_error("Class " + klass + " Not Exist");
             }
-            auto pointer = new RcObject(klass, flag);
+            // todo: how to save number and obj?
+            auto pointer = new RcObject(klass, flag, global_class_table[klass]._vars.size());
             if(pointer == nullptr)
             {
                 throw std::runtime_error("alloc nullptr");

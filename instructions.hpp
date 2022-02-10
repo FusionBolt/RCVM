@@ -20,6 +20,7 @@ LocalVarOperator,
 Mul,
 Pop,
 Push,
+PushThis,
 Return,
 SetLocal,
 Sub,
@@ -76,15 +77,15 @@ string class_type;
 struct Call : VMInst
 {
 public:
-  Call(string _klass, string _target):VMInst(InstType::Call), klass(_klass), target(_target) {}
+  Call(string _target, int _argc):VMInst(InstType::Call), target(_target), argc(_argc) {}
 
   std::string to_string() override 
   { 
-    return "Call:"+klass +target;
+    return "Call:"+target +std::to_string(argc);
   }
 
-string klass;
 string target;
+int argc;
 };
 
 struct CondJump : VMInst
@@ -218,6 +219,19 @@ public:
 int value;
 };
 
+struct PushThis : VMInst
+{
+public:
+  PushThis():VMInst(InstType::PushThis) {}
+
+  std::string to_string() override 
+  { 
+    return "PushThis:";
+  }
+
+
+};
+
 struct Return : VMInst
 {
 public:
@@ -277,7 +291,7 @@ if (list[0] == "Addr") return std::make_shared<Addr>(list[1], std::stoi(list[2])
 
 if (list[0] == "Alloc") return std::make_shared<Alloc>(list[1]);
 
-if (list[0] == "Call") return std::make_shared<Call>(list[1], list[2]);
+if (list[0] == "Call") return std::make_shared<Call>(list[1], std::stoi(list[2]));
 
 if (list[0] == "CondJump") return std::make_shared<CondJump>(list[1], std::stoi(list[2]));
 
@@ -298,6 +312,8 @@ if (list[0] == "Mul") return std::make_shared<Mul>();
 if (list[0] == "Pop") return std::make_shared<Pop>(std::stoi(list[1]));
 
 if (list[0] == "Push") return std::make_shared<Push>(std::stoi(list[1]));
+
+if (list[0] == "PushThis") return std::make_shared<PushThis>();
 
 if (list[0] == "Return") return std::make_shared<Return>();
 
