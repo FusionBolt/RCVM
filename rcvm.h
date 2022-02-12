@@ -51,31 +51,41 @@ namespace RCVM
             }
         }
 
+        void set_pc(size_t new_pc)
+        {
+            _pc = new_pc;
+            _pc_need_incr = false;
+        }
+
         EvalStack& eval_stack()
         {
             return _eval_stack;
         }
 
-        void begin_call(const std::string& f, size_t argc)
+        FunInfo &method_search(const RcObject * const obj, const std::string &f)
         {
-            auto *obj = _eval_stack.get_object(argc);
             auto klass = obj->klass();
             if(!global_class_table.contains(klass) || !global_class_table[klass]._methods.contains(f))
             {
                 throw std::runtime_error("Target Function:" + f + " Not Found");
             }
+            return global_class_table[klass]._methods[f];
+        }
 
-            // todo: find definition
-            auto &fun = global_class_table[klass]._methods[f];
+        void begin_call(const std::string& f, size_t argc)
+        {
+            auto *obj = _eval_stack.get_object(argc);
+            auto &fun = method_search(obj, f);
             if(fun.begin == UndefinedAddr)
             {
-                fun.begin = load_method(klass, f, fun);
+                fun.begin = load_method(obj->klass(), f, fun);
             }
-            // todo: var args
+
             // 1. stack process
-            _eval_stack.begin_call(fun.argc, fun.locals, _pc + 1);
+            _eval_stack.begin_call(fun.argc, fun.locals, _pc + 1, obj);
             // 2. set pc
-            _pc = fun.begin;
+            set_pc(fun.begin);
+
             EXEC_LOG("Call " + f + " new PC:" + std::to_string(_pc) + " ret pc:"
                 + std::to_string(_eval_stack.current_frame()->ret_addr()));
         }
@@ -91,14 +101,12 @@ namespace RCVM
             {
                 _inst_list.push_back(inst);
             }
-            _pc_need_incr = false;
             return start;
         }
 
         void end_call()
         {
-            _pc = _eval_stack.end_call();
-            _pc_need_incr = false;
+            set_pc(_eval_stack.end_call());
             _can_stop = _eval_stack.current_frame()->prev() == nullptr;
             EXEC_LOG("Return");
         }
@@ -110,6 +118,8 @@ namespace RCVM
             auto *kernel = gc.alloc_static_obj(VMGlobalClass);
             _eval_stack.push_pointer(kernel);
             begin_call(VMEntryFun, 0);
+            // because pc will not increase if lose this
+            // then first inst will be executed twice(first not increase)
             _pc_need_incr = true;
             STATE_LOG("Init:Jump To Main");
             LOG_DEBUG("Current PC:" + std::to_string(_pc));

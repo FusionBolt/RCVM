@@ -65,21 +65,15 @@ namespace RCVM {
             return _frame->this_ptr();
         }
 
-        void begin_call(size_t argc, size_t locals, size_t ret_addr)
+        void begin_call(size_t argc, size_t locals, size_t ret_addr, RcObject *this_ptr)
         {
-            // 1. get new this_ptr
-            auto this_ptr = get_object(argc);
-            if(this_ptr == nullptr)
-            {
-                throw std::runtime_error("ThisPtr is nullptr");
-            }
-            // 2.set stack base
+            // 1.set stack base
             auto *base = get_args_begin(argc);
-            // 3.alloc local var space
+            // 2.alloc local var space
             _stack_top = stack_move(base, static_cast<int>(locals));
-            // 4.create new stack frame
+            // 3.create new stack frame
             _frame = std::make_shared<StackFrame>(_frame, base, ret_addr, this_ptr);
-            // 5.increase depth
+            // 4.increase depth
             ++_depth;
         }
 
