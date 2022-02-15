@@ -41,15 +41,16 @@ namespace RCVM {
 
         SymbolTable &operator=(SymbolTable &&other) = default;
 
-        void define(const std::string &sym, T value) {
+        T& define(const std::string &sym, T value) {
             _table[sym] = value;
+            return _table[sym];
         }
 
         T &operator[](const std::string &sym) {
             return _table[sym];
         }
 
-        bool contains(const std::string &sym) {
+        bool contains(const std::string &sym) const {
             return _table.contains(sym);
         }
 
@@ -62,8 +63,8 @@ namespace RCVM {
     public:
         ClassInfo() = default;
 
-        ClassInfo(const std::vector<std::string>& vars, const SymbolTable<FunInfo>& methods)
-            : _vars(vars), _methods(methods) {}
+        ClassInfo(std::vector<std::string>  vars, const SymbolTable<FunInfo>& methods, std::vector<std::string> parents)
+            : _vars(std::move(vars)), _methods(methods), _parents(std::move(parents)) {}
 
         ClassInfo(const ClassInfo &other) = default;
 
@@ -75,6 +76,7 @@ namespace RCVM {
 
         std::vector<std::string> _vars;
         SymbolTable<FunInfo> _methods;
+        std::vector<std::string> _parents;
     };
 
     using ClassSymbolTable = SymbolTable<ClassInfo>;

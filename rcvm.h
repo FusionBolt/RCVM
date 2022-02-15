@@ -6,6 +6,7 @@
 #include "gc.h"
 #include "logger.h"
 #include "debug_util.h"
+#include "exception.h"
 
 namespace RCVM
 {
@@ -37,6 +38,9 @@ namespace RCVM
         constexpr static auto VMGlobalClass = "Kernel";
         VM() = default;
 
+        VM(const VM&) = delete;
+        VM operator=(const VM&) = delete;
+
         void run();
 
         void pc_increase()
@@ -57,6 +61,8 @@ namespace RCVM
             _pc_need_incr = false;
         }
 
+        [[nodiscard]] size_t pc() const { return _pc; }
+
         EvalStack& eval_stack()
         {
             return _eval_stack;
@@ -64,12 +70,26 @@ namespace RCVM
 
         FunInfo &method_search(const RcObject * const obj, const std::string &f)
         {
-            auto klass = obj->klass();
-            if(!global_class_table.contains(klass) || !global_class_table[klass]._methods.contains(f))
+            return method_search(obj->klass(), f);
+        }
+
+        // todo:test
+        FunInfo &method_search(const std::string &klass, const std::string &f)
+        {
+            auto &class_table = global_class_table[klass];
+            if(class_table._methods.contains(f))
             {
-                throw std::runtime_error("Target Function:" + f + " Not Found");
+                return class_table._methods[f];
             }
-            return global_class_table[klass]._methods[f];
+            else if(class_table._parents.empty())
+            {
+                throw MethodNotFoundException(f);
+            }
+            else
+            {
+                // todo:mixin
+                return method_search(class_table._parents[0], f);
+            }
         }
 
         void begin_call(const std::string& f, size_t argc)
@@ -111,7 +131,12 @@ namespace RCVM
             EXEC_LOG("Return");
         }
 
-        bool can_stop() const { return _can_stop; }
+        [[nodiscard]] bool can_stop() const { return _can_stop; }
+
+        void set_can_stop() { _can_stop = true; }
+
+        [[nodiscard]] bool pc_need_incr() const { return _pc_need_incr; }
+
     private:
         void init()
         {
@@ -181,6 +206,8 @@ namespace RCVM
                     visit(static_cast<const Alloc&>(inst));break;
                 case InstType::PushThis:
                     visit(static_cast<const PushThis&>(inst));break;
+                case InstType::InvokeSuper:
+                    visit(static_cast<const InvokeSuper&>(inst));break;
             }
         }
 
@@ -261,6 +288,12 @@ namespace RCVM
         {
             _eval_stack.push_pointer(_eval_stack.this_ptr());
         }
+
+        void visit([[maybe_unused]] const InvokeSuper &inst)
+        {
+
+        }
+
     private:
         VM &_vm;
         EvalStack &_eval_stack;

@@ -4,7 +4,8 @@ message(STATUS "Test")
 macro(add_test_exec name)
     add_executable(${name} ${name}.cpp)
     target_link_libraries(${name} PRIVATE
-            CONAN_PKG::gtest)
+            CONAN_PKG::gtest
+            CONAN_PKG::glog)
     add_test(NAME ${name} COMMAND ${name})
 endmacro()
 file(GLOB TEST_NAMES CONFIGURE_DEPENDS test_*.cpp)

@@ -15,6 +15,7 @@ DirectJump,
 Div,
 FunLabel,
 GetLocal,
+InvokeSuper,
 Label,
 LocalVarOperator,
 Mul,
@@ -152,6 +153,19 @@ public:
   }
 
 int offset;
+};
+
+struct InvokeSuper : VMInst
+{
+public:
+  InvokeSuper(int _argc):VMInst(InstType::InvokeSuper), argc(_argc) {}
+
+  std::string to_string() override 
+  { 
+    return "InvokeSuper:"+std::to_string(argc);
+  }
+
+int argc;
 };
 
 struct Label : VMInst
@@ -302,6 +316,8 @@ if (list[0] == "Div") return std::make_shared<Div>();
 if (list[0] == "FunLabel") return std::make_shared<FunLabel>(list[1]);
 
 if (list[0] == "GetLocal") return std::make_shared<GetLocal>(std::stoi(list[1]));
+
+if (list[0] == "InvokeSuper") return std::make_shared<InvokeSuper>(std::stoi(list[1]));
 
 if (list[0] == "Label") return std::make_shared<Label>(list[1]);
 

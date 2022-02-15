@@ -44,8 +44,13 @@ namespace RCVM {
             std::string str;
             SymbolTable<ClassInfo> class_table;
             while (std::getline(f, str)) {
-                // 1. class name
-                auto class_name = str;
+                // 1. name and parents
+                auto klass = split(str);
+                auto class_name = klass[0];
+                std::vector<std::string> parents;
+                for (int i = 1; i < klass.size(); ++i) {
+                    parents.push_back(klass[i]);
+                }
                 // 2. member vars
                 std::getline(f, str);
                 auto member_vars = split(str);
@@ -71,7 +76,7 @@ namespace RCVM {
                     }
                     std::getline(f, str);
                 }
-                ClassInfo class_info(member_vars, fun_table);
+                ClassInfo class_info(member_vars, fun_table, parents);
                 class_table.define(class_name, class_info);
             }
             f.close();

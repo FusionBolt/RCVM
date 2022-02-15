@@ -48,11 +48,14 @@ namespace RCVM {
         }
 
         WordT& get_value(int offset) {
-            return *get_top_offset(offset);
+            return *get_top_offset_ptr(offset);
         }
 
         uintptr_t& get_top_pointer_value(int offset) {
-            return *reinterpret_cast<uintptr_t*>(get_top_offset(offset));
+            // 1. get pointer which point to stack data
+            // 2. reinterpret_cast from uintptr_t to long, because of the opposite of push
+            // 3. get value for pointer , this value is obj address
+            return *reinterpret_cast<uintptr_t*>(get_top_offset_ptr(offset));
         }
 
         RcObject *get_object(size_t argc) {
@@ -162,7 +165,7 @@ namespace RCVM {
             _stack_top = _stack_top + offset * MoveOffset;
         }
 
-        WordT *get_top_offset(int offset)
+        WordT *get_top_offset_ptr(int offset)
         {
             return get_offset_pos(_stack_top, offset);
         }
