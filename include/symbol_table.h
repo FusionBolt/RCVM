@@ -82,8 +82,15 @@ namespace RCVM {
     using ClassSymbolTable = SymbolTable<ClassInfo>;
     inline ClassSymbolTable global_class_table;
 
-    void init_class_symbol_table(ClassSymbolTable&& table)
+    inline void init_class_symbol_table(ClassSymbolTable&& table)
     {
         global_class_table = table;
     }
+
+    class RcObject;
+    std::string get_parent_class(const RcObject * obj);
+
+    FunInfo &method_search(const RcObject * obj, const std::string &f, bool super = false);
+
+    FunInfo &method_search(const std::string &klass, const std::string &f);
 }

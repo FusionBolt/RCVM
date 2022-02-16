@@ -9,7 +9,7 @@ namespace RCVM {
         bool stack = true;
     };
 
-    void init_logger(char* argv[])
+    inline void init_logger(char* argv[])
     {
         google::InitGoogleLogging(argv[0]);
         FLAGS_logtostderr = true;

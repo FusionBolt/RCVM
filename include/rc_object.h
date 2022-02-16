@@ -2,7 +2,7 @@
 
 #include <utility>
 
-#include "symbol_table.hpp"
+#include "symbol_table.h"
 
 namespace RCVM {
     using Flag = unsigned char;

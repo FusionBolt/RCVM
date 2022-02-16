@@ -1,7 +1,7 @@
 #pragma once
-#include <symbol_table.hpp>
-#include <compiler_defs.h>
-#include <rcvm.h>
+#include "symbol_table.h"
+#include "compiler_defs.h"
+#include "rcvm.h"
 
 namespace RCVMTest
 {

@@ -297,7 +297,7 @@ public:
 
 string unset_addr;
 };
-std::shared_ptr<VMInst> get_inst(const std::vector<std::string> &list)
+inline std::shared_ptr<VMInst> get_inst(const std::vector<std::string> &list)
 {
 if (list[0] == "Add") return std::make_shared<Add>();
 

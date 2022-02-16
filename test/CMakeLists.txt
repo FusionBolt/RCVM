@@ -4,6 +4,7 @@ message(STATUS "Test")
 macro(add_test_exec name)
     add_executable(${name} ${name}.cpp)
     target_link_libraries(${name} PRIVATE
+            RCVM
             CONAN_PKG::gtest
             CONAN_PKG::glog)
     add_test(NAME ${name} COMMAND ${name})

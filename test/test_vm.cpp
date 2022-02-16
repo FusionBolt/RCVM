@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include "helper.h"
-#include "rcvm.h"
+#include "exception.h"
+#include <rcvm.h>
 
 using namespace RCVM;
 using namespace RCVMTest;
@@ -36,13 +37,13 @@ TEST(VMTest, method_search)
 {
     VM vm;
     ASSERT_NO_THROW(
-            auto method = vm.method_search("Child", "f1");
+            auto method = method_search("Child", "f1");
                     );
 
-    ASSERT_THROW(vm.method_search("Child", "f2"), MethodNotFoundException);
+    ASSERT_THROW(method_search("Child", "f2"), MethodNotFoundException);
 
     ASSERT_NO_THROW(
-            auto method = vm.method_search("Child", "parent_f1");
+            auto method = method_search("Child", "parent_f1");
             );
 }
 

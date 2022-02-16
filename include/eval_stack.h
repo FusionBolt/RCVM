@@ -10,17 +10,14 @@ namespace RCVM {
         // 2MB stack memory
         EvalStack() :
                 _memory(std::make_unique<unsigned char[]>(1024 * 2048)),
-                _frame(std::make_shared<StackFrame>(nullptr, _memory.get(), 0, nullptr)),
+                _frame(std::make_shared<StackFrame>(nullptr, _memory.get(), 0, nullptr, InitMethodName)),
                 _stack_top(_memory.get()),
                 _stack_bottom(_stack_top) { }
 
         EvalStack(const EvalStack&) = delete;
         EvalStack operator=(const EvalStack&) = delete;
 
-        void push(long value) {
-            write_pos_value() = value;
-            stack_move(1);
-        }
+        void push(long value);
 
         template <typename T>
         void push_pointer(T *p)
@@ -29,12 +26,7 @@ namespace RCVM {
         }
         // stack_top point to address which will be writen
         // need move down before read
-        WordT pop()
-        {
-            stack_move(-1);
-            auto value = write_pos_value();
-            return value;
-        }
+        WordT pop();
 
         template<typename Callable>
         void exec(Callable &&f)
@@ -64,35 +56,17 @@ namespace RCVM {
             return reinterpret_cast<RcObject*>(ptr);
         }
 
-        RcObject *this_ptr() const {
+        [[nodiscard]] RcObject *this_ptr() const {
             return _frame->this_ptr();
         }
 
-        void begin_call(size_t argc, size_t locals, size_t ret_addr, RcObject *this_ptr)
-        {
-            // 1.set stack base
-            auto *base = get_args_begin(argc);
-            // 2.alloc local var space
-            _stack_top = stack_move(base, static_cast<int>(locals));
-            // 3.create new stack frame
-            _frame = std::make_shared<StackFrame>(_frame, base, ret_addr, this_ptr);
-            // 4.increase depth
-            ++_depth;
+        [[nodiscard]] std::string current_method() const {
+            return _frame->method();
         }
 
-        size_t end_call()
-        {
-            // todo: test end call, ret value and frame base
-            // 1. get ret addr
-            auto ret_addr = _frame->ret_addr();
-            // 2. stack back
-            _stack_top = _frame->base();
-            // 3. frame back
-            _frame = _frame->prev();
-            // 4.decrease depth
-            --_depth;
-            return ret_addr;
-        }
+        void begin_call(size_t argc, size_t locals, size_t ret_addr, RcObject *this_ptr, const std::string &f);
+
+        size_t end_call();
 
         size_t depth() const { return _depth; }
         // positive only
@@ -107,41 +81,11 @@ namespace RCVM {
         }
 
         // todo:const
-        std::vector<WordT> current_data()
-        {
-            std::vector<WordT> vars;
-            auto count = (_stack_top - _frame->base()) / MoveOffset;
-            for (int i = 0; i < count; ++i) {
-                vars.push_back(*get_base_offset(i));
-            }
-            return vars;
-        }
+        std::vector<WordT> current_data();
 
-        std::vector<WordT> frame_data(const StackFrame *frame, const Pointer next_base)
-        {
-            std::vector<WordT> vars;
-            auto count = (next_base - frame->base()) / MoveOffset;
-            for (int i = 0; i < count; ++i) {
-                vars.push_back(*get_frame_base_offset(frame, i));
-            }
-            return vars;
-        }
+        std::vector<WordT> frame_data(const StackFrame *frame, const Pointer next_base);
 
-        std::vector<std::vector<WordT>> all_frame_data()
-        {
-            auto data = std::vector<std::vector<WordT>>();
-            auto frame = current_frame();
-            Pointer next_base = _stack_top;
-            while(frame != nullptr)
-            {
-                data.push_back(frame_data(frame, next_base));
-                next_base = frame->base();
-                frame = frame->prev().get();
-            }
-            std::reverse(data.begin(), data.end());
-            return data;
-        }
-
+        std::vector<std::vector<WordT>> all_frame_data();
 
         StackFrame* current_frame() const {
             return _frame.get();

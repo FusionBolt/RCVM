@@ -67,9 +67,10 @@ TEST(EvalStackTest, fun_call)
     ASSERT_EQ(obj, o);
     auto bottom_frame = stack.current_frame();
 
-    stack.begin_call(argc, 3, 0);
+    stack.begin_call(argc, 3, 0, o, "f");
     auto frame = stack.current_frame();
     ASSERT_EQ(frame->prev().get(), bottom_frame);
+    ASSERT_EQ(stack.current_method(), "f");
     stack.end_call();
     ASSERT_EQ(old_top + EvalStack::MoveOffset, stack.top());
     ASSERT_EQ(bottom_frame, stack.current_frame());

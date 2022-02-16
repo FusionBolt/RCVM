@@ -1,8 +1,8 @@
 #pragma once
 
 #include <set>
-#include <rc_object.h>
-#include <symbol_table.hpp>
+#include "rc_object.h"
+#include "symbol_table.h"
 
 namespace RCVM
 {
@@ -52,22 +52,7 @@ namespace RCVM
         }
     private:
 
-        RcObject *new_obj(const std::string& klass, Flag flag) {
-            if(!global_class_table.contains(klass))
-            {
-                throw std::runtime_error("Class " + klass + " Not Exist");
-            }
-            // todo: how to save number and obj?
-            auto pointer = new RcObject(klass, flag, global_class_table[klass]._vars.size());
-            if(pointer == nullptr)
-            {
-                throw std::runtime_error("alloc nullptr");
-                //run();
-            }
-            _obj_list.insert(pointer);
-            // compute klass size
-            return pointer;
-        }
+        RcObject *new_obj(const std::string& klass, Flag flag);
 
         std::set<RcObject *> _obj_list;
     };
