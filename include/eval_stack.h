@@ -52,7 +52,7 @@ namespace RCVM {
 
         RcObject *get_object(size_t argc) {
             // neg offset
-            auto ptr = get_top_pointer_value(static_cast<int>(-(argc + 1)));
+            auto ptr = get_top_pointer_value(-static_cast<int>(argc + 1));
             return reinterpret_cast<RcObject*>(ptr);
         }
 
