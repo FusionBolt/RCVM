@@ -47,10 +47,4 @@ TEST(VMTest, method_search)
             );
 }
 
-int main(int argc, char *argv[])
-{
-    testing::InitGoogleTest(&argc, argv);
-    testing::Environment* env = new VMTestEnv();
-    testing::AddGlobalTestEnvironment(env);
-    return RUN_ALL_TESTS();
-}
+MAIN(VMTestEnv)

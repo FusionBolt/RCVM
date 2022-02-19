@@ -15,7 +15,7 @@ namespace RCVMTest
 
     void register_foo()
     {
-        RCVM::global_class_table.define("Foo", RCVM::ClassInfo());
+        RCVM::global_class_table.define("Foo", RCVM::ClassInfo({"var"}, {}, {}));
     }
 
     void register_inherit_class()
@@ -24,7 +24,16 @@ namespace RCVMTest
         parent_methods.define("parent_f1", RCVM::FunInfo());
         RCVM::SymbolTable<RCVM::FunInfo> child_methods;
         child_methods.define("f1", RCVM::FunInfo());
-        RCVM::global_class_table.define("Parent", RCVM::ClassInfo({}, parent_methods, {}));
-        RCVM::global_class_table.define("Child", RCVM::ClassInfo({}, child_methods, {"Parent"}));
+        RCVM::global_class_table.define("Parent", RCVM::ClassInfo({"parent_v"}, parent_methods, {}));
+        RCVM::global_class_table.define("Child", RCVM::ClassInfo({"child_v"}, child_methods, {"Parent"}));
     }
+
+#define MAIN(env_name) \
+int main(int argc, char *argv[]) \
+{ \
+    testing::InitGoogleTest(&argc, argv); \
+    testing::Environment* env = new env_name(); \
+    testing::AddGlobalTestEnvironment(env); \
+    return RUN_ALL_TESTS(); \
+}
 }

@@ -12,10 +12,7 @@ RCVM::SymbolTable<RCVM::ClassInfo> RCVM::VMParser::parse() {
         // 1. name and parents
         auto klass = split(str);
         auto class_name = klass[0];
-        std::vector<std::string> parents;
-        for (int i = 1; i < klass.size(); ++i) {
-            parents.push_back(klass[i]);
-        }
+        auto parent = klass.size() == 1 ? "" : klass[1];
         // 2. member vars
         std::getline(f, str);
         auto member_vars = split(str);
@@ -41,7 +38,7 @@ RCVM::SymbolTable<RCVM::ClassInfo> RCVM::VMParser::parse() {
             }
             std::getline(f, str);
         }
-        ClassInfo class_info(member_vars, fun_table, parents);
+        ClassInfo class_info(member_vars, fun_table, parent);
         class_table.define(class_name, class_info);
     }
     f.close();

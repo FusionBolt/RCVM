@@ -45,5 +45,9 @@ void VMInstVisitor::accept(const VMInst &inst)
             visit(static_cast<const PushThis&>(inst));break;
         case InstType::InvokeSuper:
             visit(static_cast<const InvokeSuper&>(inst));break;
+        case InstType::GetClassMemberVar:
+            visit(static_cast<const GetClassMemberVar&>(inst));break;
+        case InstType::SetClassMemberVar:
+            visit(static_cast<const SetClassMemberVar&>(inst));break;
     }
 }

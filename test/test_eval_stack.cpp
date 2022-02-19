@@ -76,10 +76,4 @@ TEST(EvalStackTest, fun_call)
     ASSERT_EQ(bottom_frame, stack.current_frame());
 }
 
-int main(int argc, char *argv[])
-{
-    testing::InitGoogleTest(&argc, argv);
-    testing::Environment* env = new EvalStackTestEnv();
-    testing::AddGlobalTestEnvironment(env);
-    return RUN_ALL_TESTS();
-}
+MAIN(EvalStackTestEnv)

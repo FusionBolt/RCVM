@@ -47,10 +47,4 @@ TEST(GCTest, alloc_stack)
     obj->has_flag(GC_TAG_STACK);
 }
 
-int main(int argc, char *argv[])
-{
-    testing::InitGoogleTest(&argc, argv);
-    testing::Environment* env = new GCTestEnv();
-    testing::AddGlobalTestEnvironment(env);
-    return RUN_ALL_TESTS();
-}
+MAIN(GCTestEnv)

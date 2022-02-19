@@ -168,6 +168,18 @@ namespace RCVM
             _vm.begin_call(_eval_stack.current_method(), inst.argc, true);
         }
 
+        void visit(const SetClassMemberVar &inst)
+        {
+            auto *obj = _eval_stack.this_ptr();
+            obj->set_value(inst.id, _eval_stack.pop());
+        }
+
+        void visit([[maybe_unused]] const GetClassMemberVar &inst)
+        {
+            auto *obj = _eval_stack.this_ptr();
+            _eval_stack.push(obj->get_number_field(inst.id));
+        }
+
     private:
         VM &_vm;
         EvalStack &_eval_stack;

@@ -14,6 +14,7 @@ CondJump,
 DirectJump,
 Div,
 FunLabel,
+GetClassMemberVar,
 GetLocal,
 InvokeSuper,
 Label,
@@ -23,6 +24,7 @@ Pop,
 Push,
 PushThis,
 Return,
+SetClassMemberVar,
 SetLocal,
 Sub,
 UnsetAddr,
@@ -142,6 +144,19 @@ public:
 string name;
 };
 
+struct GetClassMemberVar : VMInst
+{
+public:
+  GetClassMemberVar(int _id):VMInst(InstType::GetClassMemberVar), id(_id) {}
+
+  std::string to_string() override 
+  { 
+    return "GetClassMemberVar:"+std::to_string(id);
+  }
+
+int id;
+};
+
 struct GetLocal : VMInst
 {
 public:
@@ -259,6 +274,19 @@ public:
 
 };
 
+struct SetClassMemberVar : VMInst
+{
+public:
+  SetClassMemberVar(int _id):VMInst(InstType::SetClassMemberVar), id(_id) {}
+
+  std::string to_string() override 
+  { 
+    return "SetClassMemberVar:"+std::to_string(id);
+  }
+
+int id;
+};
+
 struct SetLocal : VMInst
 {
 public:
@@ -315,6 +343,8 @@ if (list[0] == "Div") return std::make_shared<Div>();
 
 if (list[0] == "FunLabel") return std::make_shared<FunLabel>(list[1]);
 
+if (list[0] == "GetClassMemberVar") return std::make_shared<GetClassMemberVar>(std::stoi(list[1]));
+
 if (list[0] == "GetLocal") return std::make_shared<GetLocal>(std::stoi(list[1]));
 
 if (list[0] == "InvokeSuper") return std::make_shared<InvokeSuper>(std::stoi(list[1]));
@@ -332,6 +362,8 @@ if (list[0] == "Push") return std::make_shared<Push>(std::stoi(list[1]));
 if (list[0] == "PushThis") return std::make_shared<PushThis>();
 
 if (list[0] == "Return") return std::make_shared<Return>();
+
+if (list[0] == "SetClassMemberVar") return std::make_shared<SetClassMemberVar>(std::stoi(list[1]));
 
 if (list[0] == "SetLocal") return std::make_shared<SetLocal>(std::stoi(list[1]));
 

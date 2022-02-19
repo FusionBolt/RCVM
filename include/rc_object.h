@@ -64,5 +64,21 @@ namespace RCVM {
         std::string klass() const {
             return basic.klass();
         }
+
+        void set_pointer(int index, RcObject *value) {
+            fields[index] = value;
+        }
+
+        void set_value(int index, int64_t value) {
+            fields[index] = reinterpret_cast<RcObject*>(value);
+        }
+
+        int64_t get_number_field(int index) const {
+            return reinterpret_cast<int64_t>(fields[index]);
+        }
+
+        RcObject *get_ptr_field(int index) const {
+            return fields[index];
+        }
     };
 }

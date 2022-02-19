@@ -6,7 +6,7 @@ RCVM::RcObject *RCVM::GC::new_obj(const string &klass, RCVM::Flag flag) {
         throw std::runtime_error("Class " + klass + " Not Exist");
     }
     // todo: how to save number and obj?
-    auto pointer = new RcObject(klass, flag, global_class_table[klass]._vars.size());
+    auto pointer = new RcObject(klass, flag, class_vars_size(klass));
     if(pointer == nullptr)
     {
         throw std::runtime_error("alloc nullptr");

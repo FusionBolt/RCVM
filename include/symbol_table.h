@@ -2,6 +2,7 @@
 #include <string>
 #include <map>
 #include <utility>
+#include <set>
 #include "compiler_defs.h"
 #include "instructions.hpp"
 
@@ -63,8 +64,8 @@ namespace RCVM {
     public:
         ClassInfo() = default;
 
-        ClassInfo(std::vector<std::string>  vars, const SymbolTable<FunInfo>& methods, std::vector<std::string> parents)
-            : _vars(std::move(vars)), _methods(methods), _parents(std::move(parents)) {}
+        ClassInfo(std::vector<std::string>  vars, const SymbolTable<FunInfo>& methods, std::string parents)
+            : _vars(std::move(vars)), _methods(methods), _parent(std::move(parents)) {}
 
         ClassInfo(const ClassInfo &other) = default;
 
@@ -76,7 +77,7 @@ namespace RCVM {
 
         std::vector<std::string> _vars;
         SymbolTable<FunInfo> _methods;
-        std::vector<std::string> _parents;
+        std::string _parent;
     };
 
     using ClassSymbolTable = SymbolTable<ClassInfo>;
@@ -86,6 +87,10 @@ namespace RCVM {
     {
         global_class_table = table;
     }
+
+    std::set<std::string> find_all_var(const std::string &klass);
+
+    size_t class_vars_size(const std::string &klass);
 
     class RcObject;
     std::string get_parent_class(const RcObject * obj);
