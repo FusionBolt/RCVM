@@ -17,16 +17,16 @@ public:
     }
 };
 
-TEST(ClassVarsSizeTest, normal)
-{
-    auto size = class_vars_size("Child");
-    ASSERT_EQ(size, 2);
-}
-
-TEST(ClassVarSizeTest, redefined_var)
-{
-    auto size = class_vars_size("SymbolTableChild");
-    ASSERT_EQ(size, 2);
-}
+//TEST(ClassVarsSizeTest, normal)
+//{
+//    auto size = class_vars_size("Child");
+//    ASSERT_EQ(size, 2);
+//}
+//
+//TEST(ClassVarSizeTest, redefined_var)
+//{
+//    auto size = class_vars_size("SymbolTableChild");
+//    ASSERT_EQ(size, 2);
+//}
 
 MAIN(SymbolTableTestEnv)

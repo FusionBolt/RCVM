@@ -42,8 +42,9 @@ namespace RCVM {
     }
 
     size_t class_vars_size(const string &klass) {
-        // todo:slow impl, only used for dynamic class
+        return global_class_table[klass]._vars.size();
+        // slow impl, only used for dynamic class
         // should create info when load symbol table
-        return find_all_var(klass).size();
+        // return find_all_var(klass).size();
     }
 }

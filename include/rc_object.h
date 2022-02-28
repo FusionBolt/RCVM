@@ -73,12 +73,12 @@ namespace RCVM {
             fields[index] = reinterpret_cast<RcObject*>(value);
         }
 
-        int64_t get_number_field(int index) const {
-            return reinterpret_cast<int64_t>(fields[index]);
-        }
-
         RcObject *get_ptr_field(int index) const {
             return fields[index];
+        }
+
+        int64_t get_number_field(int index) const {
+            return reinterpret_cast<int64_t>(fields[index]);
         }
     };
 }

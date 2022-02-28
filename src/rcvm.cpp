@@ -85,3 +85,9 @@ void VM::set_pc(size_t new_pc) {
     _pc = new_pc;
     _pc_need_incr = false;
 }
+
+void VM::relative_pc(int offset) {
+    DEBUG_CHECK(static_cast<int>(_pc) + offset < 0,
+                "invalid pc, pc:" + std::to_string(_pc) + "offset:" + std::to_string(offset))
+    set_pc(_pc + offset);
+}

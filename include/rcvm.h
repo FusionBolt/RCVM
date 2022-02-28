@@ -7,7 +7,6 @@
 #include "logger.h"
 #include "debug_util.h"
 
-
 namespace RCVM
 {
     inline void print(const std::vector<long> &vars)
@@ -46,6 +45,8 @@ namespace RCVM
         void pc_increase();
 
         void set_pc(size_t new_pc);
+
+        void relative_pc(int offset);
 
         [[nodiscard]] size_t pc() const { return _pc; }
 
@@ -86,24 +87,26 @@ namespace RCVM
         void accept(const VMInst &inst);
 
         void visit([[maybe_unused]] const Add &inst) {
-            _eval_stack.exec([](auto &&a, auto&& b) { return a + b; });
+          _eval_stack.exec([](auto &&a, auto &&b) { return a + b; });
         }
 
         void visit([[maybe_unused]] const Sub &inst) {
-            _eval_stack.exec([](auto &&a, auto&& b) { return a - b; });
+          _eval_stack.exec([](auto &&a, auto &&b) { return a - b; });
         }
 
         void visit([[maybe_unused]] const Mul &inst) {
-            _eval_stack.exec([](auto &&a, auto&& b) { return a * b; });
+          _eval_stack.exec([](auto &&a, auto &&b) { return a * b; });
         }
 
         void visit([[maybe_unused]] const Div &inst) {
-            _eval_stack.exec([](auto &&a, auto&& b) { return a / b; });
+          _eval_stack.exec([](auto &&a, auto &&b) { return a / b; });
         }
 
         void visit([[maybe_unused]] const Label &inst) {}
 
-        void visit([[maybe_unused]] const DirectJump &inst) {}
+        void visit([[maybe_unused]] const DirectJump &inst) {
+            NOT_IMPL
+        }
 
         void visit([[maybe_unused]] const CondJump &inst) {}
 
@@ -163,7 +166,7 @@ namespace RCVM
             _eval_stack.push_pointer(_eval_stack.this_ptr());
         }
 
-        void visit([[maybe_unused]] const InvokeSuper &inst)
+        void visit(const InvokeSuper &inst)
         {
             _vm.begin_call(_eval_stack.current_method(), inst.argc, true);
         }
@@ -174,10 +177,44 @@ namespace RCVM
             obj->set_value(inst.id, _eval_stack.pop());
         }
 
-        void visit([[maybe_unused]] const GetClassMemberVar &inst)
+        void visit(const GetClassMemberVar &inst)
         {
             auto *obj = _eval_stack.this_ptr();
             _eval_stack.push(obj->get_number_field(inst.id));
+        }
+
+        void visit([[maybe_unused]]  const EQ &inst)
+        {
+            _eval_stack.exec(BinaryOp::EQ);
+        }
+
+        void visit([[maybe_unused]]  const GT &inst)
+        {
+            _eval_stack.exec(BinaryOp::GT);
+        }
+
+        void visit([[maybe_unused]]  const LT &inst)
+        {
+            _eval_stack.exec(BinaryOp::LT);
+        }
+
+        void visit([[maybe_unused]] const JumpAfterIf &inst)
+        {
+            throw std::runtime_error("JumpAfterIf should be eliminate in compile time");
+        }
+
+        void visit([[maybe_unused]] const JumpFalse &inst)
+        {
+            auto cond = _eval_stack.pop();
+            if(cond == 0)
+            {
+                _vm.relative_pc(inst.offset);
+            }
+        }
+
+        void visit(const RelativeJump &inst)
+        {
+            _vm.relative_pc(inst.offset);
         }
 
     private:
