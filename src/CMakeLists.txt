@@ -6,6 +6,6 @@ add_library(RCVM
         gc.cpp
         vm_parser.cpp
         rcvm.cpp
-        vm_accept.cpp)
+        vm_accept.cpp pc.cpp ../include/pc.h)
 target_include_directories(RCVM PUBLIC ../include)
 target_link_libraries(RCVM CONAN_PKG::glog)

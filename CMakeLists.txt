@@ -57,5 +57,5 @@ if(RCVM_TEST)
 endif()
 
 add_subdirectory(src)
-add_executable(Run src/main.cpp)
+add_executable(Run src/main.cpp src/code_segment.cpp include/code_segment.h)
 target_link_libraries(Run RCVM)

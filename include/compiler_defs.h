@@ -8,8 +8,4 @@ namespace RCVM
     using ConstPointer = unsigned char const*;
 
 #define NOT_IMPL throw std::runtime_error("DirectJump Not Implement");
-
-#define DEBUG_CHECK(cond, msg) \
-    if(cond) \
-    { throw std::runtime_error(msg); }
 }
